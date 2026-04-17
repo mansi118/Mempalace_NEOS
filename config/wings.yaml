@@ -1,0 +1,131 @@
+# Authoritative wing + room layout. Augmented from MemPalace v3.3.0
+# (neos-memory-palace/schema/wings.yaml) with primary_hall per room.
+#
+# primary_hall: navigational grouping under the wing in the palace tree.
+# Closets within a room can have ANY of the 13 categories — primary_hall
+# is for UI/UX organization, not access control or routing.
+#
+# Adding or removing wings requires bumping schema_version.
+
+schema_version: 1
+
+# Standard hall types created in every wing. The hall.type field uses these.
+hall_types:
+  - decisions
+  - facts
+  - conversations
+  - lessons
+  - preferences
+  - tasks
+  - procedures
+  - signals
+  - identities
+
+wings:
+
+  platform:
+    description: NEOS platform, NEops, architecture, stack
+    sort_order: 1
+    rooms:
+      stack:          { primary_hall: facts,     description: "Tech stack registry — every dependency, version, config" }
+      architecture:   { primary_hall: facts,     description: "System design, multi-agent topology, CORTEX layers" }
+      neop-catalog:   { primary_hall: facts,     description: "Every NEop — name, purpose, status, owner, deps" }
+      api-contracts:  { primary_hall: facts,     description: "Internal APIs, webhooks, external integration shapes" }
+      features:       { primary_hall: facts,     description: "What exists, what's WIP, what's planned" }
+      retired:        { primary_hall: lessons,   description: "Killed components and why (NE-HERMES, CRM NeP, ...)" }
+      pricing:        { primary_hall: decisions, description: "Tier 1/2 model, NEop pricing, packaging decisions" }
+
+  clients:
+    description: Active and historical client engagements
+    sort_order: 2
+    rooms:
+      _shared:        { primary_hall: facts,         description: "Cross-client patterns, health dashboard, upsell signals" }
+      zoo-media:      { primary_hall: conversations, description: "Active — ICD engagement" }
+      unborred-club:  { primary_hall: lessons,       description: "Historical" }
+
+  team:
+    description: People-centric memory for the NeuralEDGE team
+    sort_order: 3
+    rooms:
+      rahul:  { primary_hall: preferences, description: "Co-Founder/CTO" }
+      mansi:  { primary_hall: preferences, description: "VP AI Research" }
+      shivam: { primary_hall: preferences, description: "Consultant" }
+      naveen: { primary_hall: preferences, description: "Consultant" }
+      ankit:  { primary_hall: preferences, description: "Consultant" }
+      org:    { primary_hall: facts,       description: "Org chart, roles, skills matrix, access matrix" }
+
+  gtm:
+    description: Finding, convincing, and closing clients
+    sort_order: 4
+    rooms:
+      pipeline:     { primary_hall: facts,     description: "Active leads and stages" }
+      icp:          { primary_hall: facts,     description: "Ideal customer profiles, qualification criteria" }
+      positioning:  { primary_hall: decisions, description: "Digital AI OS framing, worldbuilding narrative" }
+      outreach:     { primary_hall: lessons,   description: "Cold email, LinkedIn, channel plays" }
+      pitch:        { primary_hall: facts,     description: "Decks, demo scripts, playbooks" }
+      competitive:  { primary_hall: facts,     description: "Competitor intel, positioning against" }
+
+  legal:
+    description: Entity, contracts, compliance, finance
+    sort_order: 5
+    rooms:
+      entities:    { primary_hall: facts,     description: "Synlex Technologies PVT. LTD., holding structure" }
+      contracts:   { primary_hall: facts,     description: "NDA/SOW/MSA, templates, active agreements" }
+      compliance:  { primary_hall: tasks,     description: "Filings, regulatory obligations, deadlines" }
+      finance:     { primary_hall: facts,     description: "MRR/ARR, invoices, runway, burn, templates" }
+      ip:          { primary_hall: decisions, description: "Patent vs trade secret decisions, OSS vs proprietary" }
+
+  rd:
+    description: Research, experimentation, meta-memory
+    sort_order: 6
+    rooms:
+      memory-systems:   { primary_hall: facts,     description: "Graphiti, Letta, Memoria, Mem0, AgentCore, A-MEM notes" }
+      agent-frameworks: { primary_hall: decisions, description: "OpenClaw, Strands, LangGraph/CrewAI rejections" }
+      experiments:      { primary_hall: lessons,   description: "What's been tried, parameters, results" }
+      papers:           { primary_hall: facts,     description: "Research library — key findings and applicability" }
+      tools:            { primary_hall: facts,     description: "Apify, Firecrawl, Neo4j, Chroma evaluations" }
+
+  marketplace:
+    description: NeP marketplace, ecosystem economics
+    sort_order: 7
+    rooms:
+      neps:       { primary_hall: facts,      description: "Published NePs, versions, self-improvement data" }
+      economics:  { primary_hall: decisions,  description: "Pricing tiers, revenue share, rental vs purchase" }
+      quality:    { primary_hall: procedures, description: "Design standards, self-improvement protocol" }
+
+  infra:
+    description: Servers, deployments, monitoring — the physical layer
+    sort_order: 8
+    rooms:
+      servers:      { primary_hall: facts,      description: "AWS EC2 ap-south-1, matrix.neuraledge.in, domains, IPs" }
+      services:     { primary_hall: facts,      description: "Service map, dependencies, health endpoints" }
+      incidents:    { primary_hall: lessons,    description: "Active + historical incidents" }
+      runbooks:     { primary_hall: procedures, description: "Deployment, rollback, incident response" }
+      linux-admin:  { primary_hall: procedures, description: "Ubuntu 24.04 operations, troubleshooting" }
+
+  partners:
+    description: Vendors and integration partners (non-clients)
+    sort_order: 9
+    rooms:
+      vendors:       { primary_hall: facts, description: "Fireflies, AWS, Convex, Anthropic, etc." }
+      integrations:  { primary_hall: facts, description: "Integration partners, API consumers, resellers" }
+
+  brand:
+    description: Content, assets, voice, case studies
+    sort_order: 10
+    rooms:
+      voice:         { primary_hall: preferences, description: "Brand voice, style guides" }
+      assets:        { primary_hall: facts,       description: "Logos, decks, templates" }
+      case-studies:  { primary_hall: facts,       description: "Proof points, testimonials" }
+
+  audit:
+    description: Read/write events on the palace itself. Short-TTL, immutable.
+    sort_order: 11
+    rooms:
+      _events:  { primary_hall: signals, description: "Every recall and remember, emitted by audit log" }
+
+  _quarantine:
+    description: Dead-letter queue for items the classifier could not route
+    sort_order: 12
+    rooms:
+      unclassified: { primary_hall: facts, description: "needs_review=true; a human must triage" }

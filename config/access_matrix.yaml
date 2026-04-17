@@ -1,0 +1,144 @@
+# NEop access matrix — ported from MemPalace v3.3.0
+# (neos-memory-palace/schema/access_matrix.yaml)
+#
+# Two tables:
+#   runtime — what ops a NEop can call (recall|remember|promote|erase|audit)
+#   content — what data a NEop can see, per (wing, category)
+#
+# Plus scope bindings — per-deployment NEop instances scoped to a specific
+# (wing, room). Cross-client isolation is enforced by the SDK using
+# these scopes.
+
+schema_version: 1
+
+# Abbreviations used in content table:
+#   "*" = all categories
+#   list = specific categories only
+#   omitted wing = no access (default deny)
+
+runtime:
+  aria:         [recall, remember, promote]
+  recon:        [recall, remember]
+  icd:          [recall, remember, promote]
+  axe-cortex:   [recall, remember]
+  cos:          [recall, remember, promote, erase]
+  nexus:        [recall, remember]
+  alte:         [recall, remember]
+  forge:        [recall, remember, promote, erase]
+  scout:        [recall, remember]
+  emma:         [recall, remember, promote]
+  neuralchat:   [recall]
+  teampulse:    [recall, remember]
+  _admin:       [recall, remember, promote, erase, audit]
+
+content:
+
+  aria:
+    platform:    { read: "*", write: [] }
+    clients:     { read: "*", write: [conversation, task] }
+    team:        { read: "*", write: [conversation, task] }
+    gtm:         { read: "*", write: [task] }
+    legal:       { read: [fact], write: [] }
+    rd:          { read: "*", write: [] }
+    marketplace: { read: [fact, signal], write: [] }
+    infra:       { read: [fact, signal], write: [] }
+    partners:    { read: "*", write: [] }
+    brand:       { read: "*", write: [] }
+    audit:       { read: [], write: [] }
+
+  recon:
+    gtm:         { read: "*", write: [fact, task, conversation] }
+    clients:     { read: [fact, conversation], write: [fact, conversation] }
+    partners:    { read: [fact], write: [] }
+    brand:       { read: "*", write: [] }
+
+  icd:
+    clients:     { read: "*", write: [fact, decision, task, conversation, lesson, procedure] }
+    platform:    { read: [fact, decision, procedure], write: [] }
+    brand:       { read: "*", write: [] }
+
+  axe-cortex:
+    gtm:         { read: "*", write: [fact, lesson, procedure] }
+    rd:          { read: "*", write: [fact, lesson] }
+    marketplace: { read: [fact, procedure], write: [procedure] }
+    brand:       { read: "*", write: [] }
+
+  cos:
+    platform:    { read: "*", write: "*" }
+    clients:     { read: "*", write: "*" }
+    team:        { read: "*", write: "*" }
+    gtm:         { read: "*", write: [task, decision] }
+    legal:       { read: "*", write: [task] }
+    rd:          { read: "*", write: [task] }
+    marketplace: { read: "*", write: [task] }
+    infra:       { read: "*", write: [task] }
+    partners:    { read: "*", write: [task] }
+    brand:       { read: "*", write: [task] }
+
+  nexus:
+    gtm:         { read: "*", write: [fact, signal] }
+    clients:     { read: [fact, signal], write: [fact, signal] }
+    partners:    { read: [fact], write: [] }
+
+  alte:
+    clients:     { read: [fact, conversation, preference], write: [fact, conversation, preference] }
+    team:        { read: [fact, preference], write: [] }
+    gtm:         { read: [fact], write: [] }
+
+  forge:
+    platform:    { read: "*", write: "*" }
+    rd:          { read: "*", write: "*" }
+    infra:       { read: "*", write: "*" }
+    marketplace: { read: "*", write: [fact, procedure] }
+    partners:    { read: "*", write: [] }
+
+  scout:
+    rd:          { read: "*", write: "*" }
+    gtm:         { read: "*", write: [fact, lesson] }
+    partners:    { read: "*", write: [fact] }
+    marketplace: { read: "*", write: [] }
+
+  emma:
+    team:        { read: "*", write: [task, conversation] }
+    infra:       { read: "*", write: [task, procedure] }
+    legal:       { read: "*", write: [task] }
+    clients:     { read: [fact, task], write: [] }
+
+  neuralchat:
+    platform:    { read: [fact], write: [] }
+    clients:     { read: [fact, conversation], write: [] }
+    team:        { read: [fact, preference], write: [] }
+    gtm:         { read: [fact], write: [] }
+    brand:       { read: "*", write: [] }
+
+  teampulse:
+    team:        { read: "*", write: [conversation, signal, task] }
+
+  _admin:
+    platform:    { read: "*", write: "*" }
+    clients:     { read: "*", write: "*" }
+    team:        { read: "*", write: "*" }
+    gtm:         { read: "*", write: "*" }
+    legal:       { read: "*", write: "*" }
+    rd:          { read: "*", write: "*" }
+    marketplace: { read: "*", write: "*" }
+    infra:       { read: "*", write: "*" }
+    partners:    { read: "*", write: "*" }
+    brand:       { read: "*", write: "*" }
+    audit:       { read: "*", write: [] }
+    _quarantine: { read: "*", write: "*" }
+
+# Scope bindings — instances of a NEop scoped to a specific wing/room.
+scopes:
+
+  icd_zoo_media:
+    parent: icd
+    scope:
+      wing: clients
+      room: zoo-media
+
+  icd_unborred_club:
+    parent: icd
+    scope:
+      wing: clients
+      room: unborred-club

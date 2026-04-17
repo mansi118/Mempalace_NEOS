@@ -1,0 +1,28 @@
+{
+  "name": "neos-memory-palace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PALACE — Context Vault memory system for NEops",
+  "type": "module",
+  "scripts": {
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "seed:palace": "tsx scripts/seedPalace.ts",
+    "seed:access": "tsx scripts/seedAccess.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "convex": "^1.17.0",
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "convex-test": "^0.0.35",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
