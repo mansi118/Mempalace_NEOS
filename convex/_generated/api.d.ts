@@ -14,18 +14,22 @@ import type {
 } from "convex/server";
 import type * as access_mutations from "../access/mutations.js";
 import type * as access_queries from "../access/queries.js";
+import type * as ingestion_embed from "../ingestion/embed.js";
 import type * as ingestion_mutations from "../ingestion/mutations.js";
 import type * as migrations_runner from "../migrations/runner.js";
 import type * as palace_mutations from "../palace/mutations.js";
 import type * as palace_queries from "../palace/queries.js";
+import type * as serving_search from "../serving/search.js";
 
 declare const fullApi: ApiFromModules<{
   "access/mutations": typeof access_mutations;
   "access/queries": typeof access_queries;
+  "ingestion/embed": typeof ingestion_embed;
   "ingestion/mutations": typeof ingestion_mutations;
   "migrations/runner": typeof migrations_runner;
   "palace/mutations": typeof palace_mutations;
   "palace/queries": typeof palace_queries;
+  "serving/search": typeof serving_search;
 }>;
 
 export declare const api: FilterApi<

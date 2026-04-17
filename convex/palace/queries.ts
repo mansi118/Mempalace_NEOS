@@ -4,7 +4,7 @@
 // convex/serving/. This file is the low-level data accessor. Filtering for
 // retracted/decayed/needsReview happens at the caller level.
 
-import { query } from "../_generated/server.js";
+import { query, internalQuery } from "../_generated/server.js";
 import { v } from "convex/values";
 import type { Id, Doc } from "../_generated/dataModel.js";
 
@@ -242,6 +242,53 @@ export const listTunnelsTo = query({
         q.eq("palaceId", palaceId).eq("toRoomId", toRoomId),
       )
       .collect();
+  },
+});
+
+// ─── PIPELINE STATUS (internal, used by embedding/graphiti backfill) ──
+
+export const closetsPendingEmbedding = internalQuery({
+  args: {
+    palaceId: v.id("palaces"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { palaceId, limit }) => {
+    const closets = await ctx.db
+      .query("closets")
+      .withIndex("by_embedding_status", (q) =>
+        q.eq("palaceId", palaceId).eq("embeddingStatus", "pending"),
+      )
+      .take(limit ?? 50);
+
+    // Only return fields the backfill action needs (content for embedding).
+    return closets
+      .filter((c) => !c.retracted)
+      .map((c) => ({ _id: c._id, content: c.content }));
+  },
+});
+
+export const closetsPendingGraphiti = internalQuery({
+  args: {
+    palaceId: v.id("palaces"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { palaceId, limit }) => {
+    const closets = await ctx.db
+      .query("closets")
+      .withIndex("by_graphiti_status", (q) =>
+        q.eq("palaceId", palaceId).eq("graphitiStatus", "pending"),
+      )
+      .take(limit ?? 50);
+
+    return closets
+      .filter((c) => !c.retracted)
+      .map((c) => ({
+        _id: c._id,
+        content: c.content,
+        wingId: c.wingId,
+        roomId: c.roomId,
+        category: c.category,
+      }));
   },
 });
 
