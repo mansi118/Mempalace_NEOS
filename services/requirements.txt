@@ -1,0 +1,19 @@
+# Graphiti bridge dependencies.
+# Pin major versions to avoid breaking changes.
+
+# Core
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.32,<1.0
+pydantic>=2.0,<3.0
+
+# Graphiti + FalkorDB
+graphiti-core[falkordb]>=0.5,<1.0
+
+# LLM providers for Graphiti extraction
+anthropic>=0.40,<1.0
+
+# Redis client (for health checks + direct graph stats queries)
+redis>=5.0,<6.0
+
+# Structured logging
+structlog>=24.0

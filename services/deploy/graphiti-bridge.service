@@ -1,0 +1,31 @@
+# systemd unit for production deployment on EC2.
+#
+# Assumes docker-compose.yml is at /opt/palace/docker-compose.yml
+# and .env is at /opt/palace/.env with production secrets.
+#
+# Install:
+#   sudo cp graphiti-bridge.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable graphiti-bridge
+#   sudo systemctl start graphiti-bridge
+#
+# Logs:
+#   journalctl -u graphiti-bridge -f
+#   docker compose -f /opt/palace/docker-compose.yml logs bridge -f
+
+[Unit]
+Description=PALACE Graphiti Bridge (FalkorDB + FastAPI)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/palace
+ExecStart=/usr/bin/docker compose -f /opt/palace/docker-compose.yml up -d
+ExecStop=/usr/bin/docker compose -f /opt/palace/docker-compose.yml down
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

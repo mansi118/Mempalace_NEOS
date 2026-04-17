@@ -1,0 +1,50 @@
+# Local development stack: FalkorDB + Graphiti bridge.
+#
+# Usage:
+#   cp .env.example .env   # fill in ANTHROPIC_API_KEY
+#   docker compose up -d
+#
+# FalkorDB Browser: http://localhost:3000
+# Bridge API:       http://localhost:8100
+# Bridge docs:      http://localhost:8100/docs
+
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    ports:
+      - "6379:6379"     # Redis protocol
+      - "3000:3000"     # FalkorDB Browser
+    volumes:
+      - falkordb_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  bridge:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+    ports:
+      - "8100:8100"
+    environment:
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: 6379
+      PALACE_BRIDGE_API_KEY: ${PALACE_BRIDGE_API_KEY:-dev-key-change-me}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY in .env}
+      VOYAGEAI_API_KEY: ${VOYAGEAI_API_KEY:-}
+      GRAPHITI_LLM_MODEL: ${GRAPHITI_LLM_MODEL:-claude-haiku-4-5-20251001}
+      BRIDGE_ENV: development
+      BRIDGE_LOG_DIR: /var/log/graphiti-bridge
+    volumes:
+      - bridge_logs:/var/log/graphiti-bridge
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  falkordb_data:
+  bridge_logs:
