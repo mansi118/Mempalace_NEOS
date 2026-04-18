@@ -147,8 +147,8 @@ describe("Phase 1 invariants", () => {
 
     // Convex OCC retries conflicting mutations. Net: exactly one closet
     // created (status="created"), all others noop.
-    const created = results.filter((r) => r.status === "created");
-    const noops = results.filter((r) => r.status === "noop");
+    const created = results.filter((r: any) => r.status === "created");
+    const noops = results.filter((r: any) => r.status === "noop");
 
     expect(created.length).toBe(1);
     expect(noops.length).toBe(19);
@@ -164,7 +164,7 @@ describe("Phase 1 invariants", () => {
       palaceId,
       dedupKey: headClosetDoc!.dedupKey,
     });
-    const heads = all.filter((c) => c.supersededBy === undefined);
+    const heads = all.filter((c: any) => c.supersededBy === undefined);
     expect(heads.length).toBe(1);
   });
 
@@ -285,7 +285,7 @@ describe("Phase 1 invariants", () => {
     expect(a.roomId).toEqual(b.roomId);
 
     // Wing room count incremented exactly once.
-    const wing = await t.run(async (ctx) => ctx.db.get(a.wingId));
+    const wing = await t.run(async (ctx) => ctx.db.get(a.wingId)) as any;
     expect(wing!.roomCount).toBe(1);
   });
 

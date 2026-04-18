@@ -21,7 +21,12 @@ import type * as ingestion_mutations from "../ingestion/mutations.js";
 import type * as migrations_runner from "../migrations/runner.js";
 import type * as palace_mutations from "../palace/mutations.js";
 import type * as palace_queries from "../palace/queries.js";
+import type * as serving_assemble from "../serving/assemble.js";
+import type * as serving_export from "../serving/export.js";
+import type * as serving_l0l1 from "../serving/l0l1.js";
+import type * as serving_rooms from "../serving/rooms.js";
 import type * as serving_search from "../serving/search.js";
+import type * as serving_tunnels from "../serving/tunnels.js";
 
 declare const fullApi: ApiFromModules<{
   "access/mutations": typeof access_mutations;
@@ -33,7 +38,12 @@ declare const fullApi: ApiFromModules<{
   "migrations/runner": typeof migrations_runner;
   "palace/mutations": typeof palace_mutations;
   "palace/queries": typeof palace_queries;
+  "serving/assemble": typeof serving_assemble;
+  "serving/export": typeof serving_export;
+  "serving/l0l1": typeof serving_l0l1;
+  "serving/rooms": typeof serving_rooms;
   "serving/search": typeof serving_search;
+  "serving/tunnels": typeof serving_tunnels;
 }>;
 
 export declare const api: FilterApi<

@@ -89,7 +89,7 @@ export const enrichClosets = internalQuery({
 // were calling searchPalace via ctx.runAction, which Convex forbids.
 // Now they all call this shared function directly.
 
-interface CoreSearchArgs {
+export interface CoreSearchArgs {
   palaceId: Id<"palaces">;
   query: string;
   wingFilter?: string;
@@ -100,7 +100,7 @@ interface CoreSearchArgs {
   beforeTs?: number;
 }
 
-async function coreSearch(
+export async function coreSearch(
   ctx: any,
   args: CoreSearchArgs,
 ): Promise<SearchResponse> {
