@@ -24,8 +24,8 @@ import { convexTest } from "convex-test";
 import { api } from "../convex/_generated/api.js";
 import schema from "../convex/schema.js";
 
-const VOY_DIM = 1024;
-const fakeEmbedding = (): number[] => Array.from({ length: VOY_DIM }, () => Math.random());
+const EMBED_DIM = 768; // Gemini Embedding
+const fakeEmbedding = (): number[] => Array.from({ length: EMBED_DIM }, () => Math.random());
 
 // Helper: create a fully-scaffolded palace with a single wing/hall/room.
 async function makePalace(t: ReturnType<typeof convexTest>) {

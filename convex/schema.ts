@@ -302,7 +302,7 @@ export default defineSchema({
     closetId: v.id("closets"),
     palaceId: v.id("palaces"),
     wingId: v.id("wings"),
-    embedding: v.array(v.float64()),       // Voyage 4: 1024 dims
+    embedding: v.array(v.float64()),       // Gemini Embedding: 768 dims
     model: v.string(),                     // "voyage-3-large"
     modelVersion: v.string(),              // "2026-04"
     generatedAt: v.number(),
@@ -310,7 +310,7 @@ export default defineSchema({
     .index("by_closet", ["closetId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
-      dimensions: 1024,
+      dimensions: 768,
       filterFields: ["palaceId", "wingId"],
     }),
 

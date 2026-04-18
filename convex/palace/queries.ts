@@ -267,6 +267,25 @@ export const closetsPendingEmbedding = internalQuery({
   },
 });
 
+export const closetsFailedEmbedding = internalQuery({
+  args: {
+    palaceId: v.id("palaces"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { palaceId, limit }) => {
+    const closets = await ctx.db
+      .query("closets")
+      .withIndex("by_embedding_status", (q) =>
+        q.eq("palaceId", palaceId).eq("embeddingStatus", "failed"),
+      )
+      .take(limit ?? 20);
+
+    return closets
+      .filter((c) => !c.retracted)
+      .map((c) => ({ _id: c._id, content: c.content }));
+  },
+});
+
 export const closetsPendingGraphiti = internalQuery({
   args: {
     palaceId: v.id("palaces"),

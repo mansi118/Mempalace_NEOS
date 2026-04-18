@@ -586,9 +586,9 @@ export const storeEmbedding = mutation({
     modelVersion: v.string(),
   },
   handler: async (ctx, args) => {
-    if (args.embedding.length !== 1024) {
+    if (args.embedding.length !== 768) {
       throw new Error(
-        `embedding must be 1024-dim (Voyage 4), got ${args.embedding.length}`,
+        `embedding must be 768-dim (Gemini), got ${args.embedding.length}`,
       );
     }
     const closet = await ctx.db.get(args.closetId);
@@ -607,6 +607,12 @@ export const storeEmbedding = mutation({
         model: args.model,
         modelVersion: args.modelVersion,
         generatedAt: Date.now(),
+      });
+      // Tier 1 fix (Issue C): also update embeddingStatus on re-embed.
+      // Without this, a closet at "failed" stays "failed" even after
+      // a successful re-embedding.
+      await safePatchCloset(ctx, args.closetId, {
+        embeddingStatus: "generated",
       });
       return existing._id;
     }
