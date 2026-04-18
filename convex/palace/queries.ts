@@ -311,6 +311,31 @@ export const closetsPendingGraphiti = internalQuery({
   },
 });
 
+export const closetsFailedGraphiti = internalQuery({
+  args: {
+    palaceId: v.id("palaces"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { palaceId, limit }) => {
+    const closets = await ctx.db
+      .query("closets")
+      .withIndex("by_graphiti_status", (q) =>
+        q.eq("palaceId", palaceId).eq("graphitiStatus", "failed"),
+      )
+      .take(limit ?? 20);
+
+    return closets
+      .filter((c) => !c.retracted)
+      .map((c) => ({
+        _id: c._id,
+        content: c.content,
+        wingId: c.wingId,
+        roomId: c.roomId,
+        category: c.category,
+      }));
+  },
+});
+
 // ─── STATS ───────────────────────────────────────────────────
 
 export const getStats = query({
