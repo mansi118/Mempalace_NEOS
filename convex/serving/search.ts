@@ -19,7 +19,7 @@
 //   - Empty query guard.
 //   - Concurrent enrichment via Promise.all.
 
-import { action, internalQuery } from "../_generated/server.js";
+import { action } from "../_generated/server.js";
 import { internal } from "../_generated/api.js";
 import { v } from "convex/values";
 import type { Id, Doc } from "../_generated/dataModel.js";
@@ -52,36 +52,6 @@ export interface SearchResponse {
   tokenEstimate: number;
   queryTimeMs: number;
 }
-
-// ─── Closet enrichment (internal query) ─────────────────────────
-
-export const enrichClosets = internalQuery({
-  args: {
-    closetIds: v.array(v.id("closets")),
-  },
-  handler: async (ctx, { closetIds }) => {
-    // Parallel db reads (Tier 3 improvement from ultrathink).
-    const results = await Promise.all(
-      closetIds.map(async (id) => {
-        const closet = await ctx.db.get(id);
-        if (!closet) return null;
-
-        const [wing, room] = await Promise.all([
-          ctx.db.get(closet.wingId),
-          ctx.db.get(closet.roomId),
-        ]);
-
-        return {
-          closet,
-          wingName: wing?.name ?? "unknown",
-          roomName: room?.name ?? "unknown",
-        };
-      }),
-    );
-
-    return results;
-  },
-});
 
 // ─── Core search logic (shared function, NOT an action) ─────────
 //
@@ -155,7 +125,7 @@ export async function coreSearch(
     closet: Doc<"closets">;
     wingName: string;
     roomName: string;
-  } | null> = await ctx.runQuery(internal.serving.search.enrichClosets, {
+  } | null> = await ctx.runQuery(internal.serving.enrich.enrichClosets, {
     closetIds,
   });
 

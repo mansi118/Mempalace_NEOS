@@ -72,6 +72,14 @@ const authorType = v.union(
 );
 
 const visibility = v.union(
+
+
+
+
+
+
+
+  
   v.literal("default"),
   v.literal("restricted"),
   v.literal("public"),
