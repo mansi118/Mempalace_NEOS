@@ -21,7 +21,9 @@ import type { Id } from "../_generated/dataModel.js";
 import { scanForPII } from "./pii.js";
 import { routeToWing, routeToRoom, classifyCategory, scoreConfidence } from "./route.js";
 import { embedOne, GEMINI_MODEL } from "../lib/gemini.js";
-import type { ExtractionItem, ExtractionResult } from "./extract.js";
+import { callGeminiLlm } from "../lib/geminiLlm.js";
+import { CATEGORIES } from "../lib/enums.js";
+import { EXTRACTION_SYSTEM_PROMPT, parseExtractionResponse, type ExtractionItem } from "./extract.js";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -69,20 +71,26 @@ export const ingestExchange = action({
     const piiTags = scanForPII(exchangeText);
 
     // ── 2. Try Gemini extraction (primary) ──────────────────
+    //    Direct call to Gemini — NOT via ctx.runAction (which would crash:
+    //    Convex forbids action-to-action calls).
     let extractions: ExtractionItem[] = [];
     let extractionFailed = false;
 
     try {
-      const result: ExtractionResult = await ctx.runAction(
-        api.ingestion.extract.extractMemories,
-        {
-          exchangeText,
-          conversationTitle: args.conversationTitle,
-          exchangeIndex: args.exchangeIndex,
-        },
-      );
-      extractions = result.items;
-      tokensUsed = result.tokensUsed;
+      const contextPrefix = args.conversationTitle
+        ? `Conversation: "${args.conversationTitle}" (exchange ${args.exchangeIndex})\n\n`
+        : "";
+
+      const response = await callGeminiLlm({
+        systemPrompt: EXTRACTION_SYSTEM_PROMPT,
+        userPrompt: contextPrefix + exchangeText,
+        jsonMode: true,
+        maxOutputTokens: 4096,
+        temperature: 0.1,
+      });
+
+      extractions = parseExtractionResponse(response.text);
+      tokensUsed = response.totalTokens;
     } catch (e) {
       extractionFailed = true;
       errors.push(`extraction_failed: ${e instanceof Error ? e.message : String(e)}`);

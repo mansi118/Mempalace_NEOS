@@ -138,14 +138,10 @@ export const generateL1 = internalMutation({
 
 // ─── Regenerate both (called by Phase 8 cron) ───────────────────
 
-export const regenerateL0L1 = internalMutation({
-  args: { palaceId: v.id("palaces") },
-  handler: async (ctx, { palaceId }) => {
-    // Can't call internal mutations from internal mutations directly,
-    // so inline the logic or schedule them. For simplicity, this is
-    // a placeholder that the cron calls both separately.
-  },
-});
+// Note: Phase 8 cron should call generateL0 and generateL1 separately.
+// Convex internal mutations CAN call other internal mutations inline,
+// but keeping them separate gives better error isolation — a failure
+// in L0 generation doesn't block L1.
 
 // ─── Helpers ────────────────────────────────────────────────────
 

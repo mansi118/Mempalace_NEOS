@@ -377,7 +377,11 @@ async function dispatch(
       });
 
     case "palace_merge_rooms":
-      throw new Error("palace_merge_rooms not yet implemented");
+      return ctx.runMutation(api.palace.mutations.mergeRooms, {
+        palaceId,
+        sourceRoomId: params.sourceRoomId as Id<"rooms">,
+        targetRoomId: params.targetRoomId as Id<"rooms">,
+      });
 
     // ── META ──────────────────────────────────────────────
     case "palace_stats":

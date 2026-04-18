@@ -18,12 +18,13 @@ import {
   runtimeOpForTool,
   AccessDenied,
 } from "../convex/access/enforce.js";
+import { ADMIN_NEOP_ID } from "../convex/lib/enums.js";
 
 // ─── Test permission sets ───────────────────────────────────────
 
 const ADMIN: ResolvedPermissions = {
-  neopId: "_admin",
-  effectiveNeopId: "_admin",
+  neopId: ADMIN_NEOP_ID,
+  effectiveNeopId: ADMIN_NEOP_ID,
   runtimeOps: ["recall", "remember", "promote", "erase", "audit"],
   contentAccess: {},
   scopeWing: null,

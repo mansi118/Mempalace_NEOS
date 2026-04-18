@@ -184,7 +184,9 @@ export const extractMemories = action({
 
 // ─── Response parsing + validation ──────────────────────────────
 
-function parseExtractionResponse(raw: string): ExtractionItem[] {
+export { SYSTEM_PROMPT as EXTRACTION_SYSTEM_PROMPT };
+
+export function parseExtractionResponse(raw: string): ExtractionItem[] {
   // Strip markdown code fences if present (belt and suspenders).
   let cleaned = raw.trim();
   if (cleaned.startsWith("```")) {

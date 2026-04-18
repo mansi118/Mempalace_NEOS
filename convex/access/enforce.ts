@@ -14,9 +14,8 @@
 //   - Scoped instances resolve content access from parentNeopId
 //   - Scope bindings block conflicting filters (not just inject defaults)
 
-import type { GenericQueryCtx } from "convex/server";
 import type { Id, Doc } from "../_generated/dataModel.js";
-import type { DataModel } from "../_generated/dataModel.js";
+import { ADMIN_NEOP_ID } from "../lib/enums.js";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -54,7 +53,7 @@ export async function resolvePermissions(
   neopId: string,
 ): Promise<ResolvedPermissions> {
   // Admin bypass.
-  if (neopId === "_admin") {
+  if (neopId === ADMIN_NEOP_ID) {
     return {
       neopId: "_admin",
       effectiveNeopId: "_admin",

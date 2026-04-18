@@ -670,6 +670,106 @@ export const createTunnel = mutation({
 });
 
 // ─────────────────────────────────────────────────────────────────
+// ROOM MERGE (admin — moves all closets from source to target, deletes source)
+// ─────────────────────────────────────────────────────────────────
+
+export const mergeRooms = mutation({
+  args: {
+    palaceId: v.id("palaces"),
+    sourceRoomId: v.id("rooms"),
+    targetRoomId: v.id("rooms"),
+  },
+  handler: async (ctx, args) => {
+    if (args.sourceRoomId === args.targetRoomId) {
+      throw new Error("cannot merge a room into itself");
+    }
+
+    const source = await ctx.db.get(args.sourceRoomId);
+    const target = await ctx.db.get(args.targetRoomId);
+    if (!source) throw new Error(`source room ${args.sourceRoomId} not found`);
+    if (!target) throw new Error(`target room ${args.targetRoomId} not found`);
+    if (source.palaceId !== args.palaceId || target.palaceId !== args.palaceId) {
+      throw new Error("both rooms must belong to the same palace");
+    }
+
+    // Move all closets from source to target.
+    const closets = await ctx.db
+      .query("closets")
+      .withIndex("by_room", (q) => q.eq("roomId", args.sourceRoomId))
+      .collect();
+
+    let moved = 0;
+    for (const closet of closets) {
+      await ctx.db.patch(closet._id, {
+        roomId: args.targetRoomId,
+        hallId: target.hallId,
+        wingId: target.wingId,
+      });
+      moved++;
+    }
+
+    // Move drawers.
+    const drawers = await ctx.db
+      .query("drawers")
+      .withIndex("by_room", (q) => q.eq("roomId", args.sourceRoomId))
+      .collect();
+    for (const drawer of drawers) {
+      await ctx.db.patch(drawer._id, { roomId: args.targetRoomId });
+    }
+
+    // Update tunnels referencing source → point to target.
+    const tunnelsFrom = await ctx.db
+      .query("tunnels")
+      .withIndex("by_palace_from", (q) =>
+        q.eq("palaceId", args.palaceId).eq("fromRoomId", args.sourceRoomId),
+      )
+      .collect();
+    for (const t of tunnelsFrom) {
+      if (t.toRoomId === args.targetRoomId) {
+        await ctx.db.delete(t._id); // Self-loop after merge → delete.
+      } else {
+        await ctx.db.patch(t._id, { fromRoomId: args.targetRoomId });
+      }
+    }
+
+    const tunnelsTo = await ctx.db
+      .query("tunnels")
+      .withIndex("by_palace_to", (q) =>
+        q.eq("palaceId", args.palaceId).eq("toRoomId", args.sourceRoomId),
+      )
+      .collect();
+    for (const t of tunnelsTo) {
+      if (t.fromRoomId === args.targetRoomId) {
+        await ctx.db.delete(t._id);
+      } else {
+        await ctx.db.patch(t._id, { toRoomId: args.targetRoomId });
+      }
+    }
+
+    // Update target room counts.
+    await safePatchRoom(ctx, args.targetRoomId, {
+      closetCount: target.closetCount + moved,
+      lastUpdated: Date.now(),
+    });
+
+    // Update source wing/hall counts (decrement).
+    const sourceHall = await ctx.db.get(source.hallId);
+    const sourceWing = await ctx.db.get(source.wingId);
+    if (sourceHall && sourceHall.roomCount > 0) {
+      await safePatchHall(ctx, source.hallId, { roomCount: sourceHall.roomCount - 1 });
+    }
+    if (sourceWing && sourceWing.roomCount > 0) {
+      await safePatchWing(ctx, source.wingId, { roomCount: sourceWing.roomCount - 1 });
+    }
+
+    // Delete source room.
+    await ctx.db.delete(args.sourceRoomId);
+
+    return { merged: moved, closetsMoved: moved, drawersMoved: drawers.length, sourceDeleted: true };
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────
 // EMBEDDINGS (Phase 3 hooks; usable in Phase 1 for tests)
 // ─────────────────────────────────────────────────────────────────
 
@@ -682,9 +782,12 @@ export const storeEmbedding = mutation({
     modelVersion: v.string(),
   },
   handler: async (ctx, args) => {
-    if (args.embedding.length !== 768) {
+    // Dimension check — must match schema vectorIndex dimensions.
+    // Using GEMINI_DIMENSIONS from lib/gemini.ts (768 for gemini-embedding-001).
+    const EXPECTED_DIMS = 768;
+    if (args.embedding.length !== EXPECTED_DIMS) {
       throw new Error(
-        `embedding must be 768-dim (Gemini), got ${args.embedding.length}`,
+        `embedding must be ${EXPECTED_DIMS}-dim, got ${args.embedding.length}`,
       );
     }
     const closet = await ctx.db.get(args.closetId);

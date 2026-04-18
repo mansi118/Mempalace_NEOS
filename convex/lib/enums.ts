@@ -88,6 +88,10 @@ export const KG_BACKED_CATEGORIES = new Set<Category>([
   "relationship",
 ]);
 
+// ───── Admin identity ─────
+
+export const ADMIN_NEOP_ID = "_admin";
+
 // ───── Convex document size guard ─────
 
 // Convex enforces a 1MB document limit. Leave headroom for metadata.
