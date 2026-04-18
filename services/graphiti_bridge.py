@@ -98,27 +98,46 @@ async def get_graphiti(palace_id: str) -> object:
             raise ValueError(f"unknown palace_id: {palace_id}")
 
         # Import driver here to keep the top-level import guard clean.
-        from graphiti_core.driver.falkordb_driver import FalkorDBDriver
+        from graphiti_core.driver.falkordb_driver import FalkorDriver
 
-        driver = FalkorDBDriver(
+        driver = FalkorDriver(
             host=cfg.falkordb_host,
             port=cfg.falkordb_port,
             database=graph_name,
         )
 
         # Configure LLM client for entity extraction.
-        # Use Haiku — 10x cheaper than Sonnet, good enough for entity extraction.
+        # Uses OpenAI-compatible client with Gemini's base URL.
         llm_client = None
-        if cfg.anthropic_api_key:
+        gemini_key = os.environ.get("GEMINI_API_KEY", "")
+        anthropic_key = cfg.anthropic_api_key
+
+        if gemini_key:
+            try:
+                from graphiti_core.llm_client import OpenAIClient, LLMConfig
+
+                llm_client = OpenAIClient(
+                    config=LLMConfig(
+                        api_key=gemini_key,
+                        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                        model="gemini-2.5-flash-preview-04-17",
+                        small_model="gemini-2.5-flash-preview-04-17",
+                    ),
+                )
+                logger.info("graphiti_llm", provider="gemini-openai-compat")
+            except Exception as e:
+                logger.warning("gemini openai-compat client failed", error=str(e))
+        elif anthropic_key:
             try:
                 from graphiti_core.llm_client.anthropic_client import AnthropicClient
+                from graphiti_core.llm_client import LLMConfig
 
                 llm_client = AnthropicClient(
-                    api_key=cfg.anthropic_api_key,
-                    model=cfg.graphiti_llm_model,
+                    config=LLMConfig(api_key=anthropic_key, model=cfg.graphiti_llm_model),
                 )
-            except ImportError:
-                logger.warning("anthropic client not available for graphiti")
+                logger.info("graphiti_llm", provider="anthropic")
+            except Exception as e:
+                logger.warning("anthropic client failed", error=str(e))
 
         g = Graphiti(
             graph_driver=driver,
