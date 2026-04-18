@@ -1,7 +1,8 @@
 // Permission + audit read queries.
 
-import { query } from "../_generated/server.js";
+import { query, internalQuery } from "../_generated/server.js";
 import { v } from "convex/values";
+import { resolvePermissions, type ResolvedPermissions } from "./enforce.js";
 
 export const getNeopPermissions = query({
   args: { palaceId: v.id("palaces"), neopId: v.string() },
@@ -32,6 +33,17 @@ export const listNeops = query({
     }));
   },
 });
+
+// ─── Permission resolution (internal, used by HTTP dispatch) ────
+
+export const resolvePermsQuery = internalQuery({
+  args: { palaceId: v.id("palaces"), neopId: v.string() },
+  handler: async (ctx, { palaceId, neopId }): Promise<ResolvedPermissions> => {
+    return resolvePermissions(ctx, palaceId, neopId);
+  },
+});
+
+// ─── Audit queries ──────────────────────────────────────────────
 
 export const recentAuditEvents = query({
   args: {
