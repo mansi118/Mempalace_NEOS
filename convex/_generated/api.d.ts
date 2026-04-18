@@ -15,6 +15,8 @@ import type {
 import type * as access_mutations from "../access/mutations.js";
 import type * as access_queries from "../access/queries.js";
 import type * as ingestion_embed from "../ingestion/embed.js";
+import type * as ingestion_extract from "../ingestion/extract.js";
+import type * as ingestion_ingest from "../ingestion/ingest.js";
 import type * as ingestion_mutations from "../ingestion/mutations.js";
 import type * as migrations_runner from "../migrations/runner.js";
 import type * as palace_mutations from "../palace/mutations.js";
@@ -25,6 +27,8 @@ declare const fullApi: ApiFromModules<{
   "access/mutations": typeof access_mutations;
   "access/queries": typeof access_queries;
   "ingestion/embed": typeof ingestion_embed;
+  "ingestion/extract": typeof ingestion_extract;
+  "ingestion/ingest": typeof ingestion_ingest;
   "ingestion/mutations": typeof ingestion_mutations;
   "migrations/runner": typeof migrations_runner;
   "palace/mutations": typeof palace_mutations;

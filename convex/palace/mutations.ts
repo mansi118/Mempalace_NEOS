@@ -235,6 +235,102 @@ export const createRoom = mutation({
   },
 });
 
+// ─── getOrCreateRoom (used by ingestion when Gemini picks a room name) ──
+
+export const getOrCreateRoom = mutation({
+  args: {
+    palaceId: v.id("palaces"),
+    wingName: v.string(),
+    roomName: v.string(),
+    summary: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<Id<"rooms">> => {
+    // Normalize names.
+    const wn = args.wingName.toLowerCase().replace(/\s+/g, "-");
+    const rn = args.roomName.toLowerCase().replace(/\s+/g, "-");
+
+    // 1. Check if room already exists by name in this palace.
+    const existing = await ctx.db
+      .query("rooms")
+      .withIndex("by_palace_name", (q) =>
+        q.eq("palaceId", args.palaceId).eq("name", rn),
+      )
+      .first();
+    if (existing) return existing._id;
+
+    // 2. Find the wing.
+    const wing = await ctx.db
+      .query("wings")
+      .withIndex("by_palace_name", (q) =>
+        q.eq("palaceId", args.palaceId).eq("name", wn),
+      )
+      .first();
+
+    if (!wing) {
+      // Wing doesn't exist — route to _quarantine wing.
+      const quarantine = await ctx.db
+        .query("wings")
+        .withIndex("by_palace_name", (q) =>
+          q.eq("palaceId", args.palaceId).eq("name", "_quarantine"),
+        )
+        .first();
+      if (!quarantine) throw new Error("_quarantine wing not found");
+
+      const hall = await ctx.db
+        .query("halls")
+        .withIndex("by_wing_type", (q) =>
+          q.eq("wingId", quarantine._id).eq("type", "facts"),
+        )
+        .first();
+      if (!hall) throw new Error("_quarantine/facts hall not found");
+
+      const roomId = await ctx.db.insert("rooms", {
+        hallId: hall._id,
+        wingId: quarantine._id,
+        palaceId: args.palaceId,
+        name: rn,
+        summary: args.summary ?? `Auto-created room: ${rn}`,
+        closetCount: 0,
+        lastUpdated: Date.now(),
+        tags: ["auto-created"],
+      });
+      await safePatchHall(ctx, hall._id, { roomCount: hall.roomCount + 1 });
+      await safePatchWing(ctx, quarantine._id, {
+        roomCount: quarantine.roomCount + 1,
+        lastActivity: Date.now(),
+      });
+      return roomId;
+    }
+
+    // 3. Find the "facts" hall as default for new rooms.
+    const hall = await ctx.db
+      .query("halls")
+      .withIndex("by_wing_type", (q) =>
+        q.eq("wingId", wing._id).eq("type", "facts"),
+      )
+      .first();
+    if (!hall) throw new Error(`No "facts" hall in wing ${wn}`);
+
+    // 4. Create the room.
+    const roomId = await ctx.db.insert("rooms", {
+      hallId: hall._id,
+      wingId: wing._id,
+      palaceId: args.palaceId,
+      name: rn,
+      summary: args.summary ?? `Auto-created room: ${rn}`,
+      closetCount: 0,
+      lastUpdated: Date.now(),
+      tags: ["auto-created"],
+    });
+    await safePatchHall(ctx, hall._id, { roomCount: hall.roomCount + 1 });
+    await safePatchWing(ctx, wing._id, {
+      roomCount: wing.roomCount + 1,
+      lastActivity: Date.now(),
+    });
+    return roomId;
+  },
+});
+
 export const updateRoomSummary = mutation({
   args: {
     roomId: v.id("rooms"),

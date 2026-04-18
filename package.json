@@ -9,6 +9,8 @@
     "deploy": "convex deploy",
     "seed:palace": "tsx scripts/seedPalace.ts",
     "seed:access": "tsx scripts/seedAccess.ts",
+    "ingest": "tsx scripts/batchIngest.ts",
+    "ingest:dry-run": "tsx scripts/batchIngest.ts --dry-run",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
