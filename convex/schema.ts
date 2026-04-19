@@ -79,7 +79,7 @@ const visibility = v.union(
 
 
 
-  
+
   v.literal("default"),
   v.literal("restricted"),
   v.literal("public"),
@@ -318,7 +318,7 @@ export default defineSchema({
     .index("by_closet", ["closetId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
-      dimensions: 4096,
+      dimensions: 768,
       filterFields: ["palaceId", "wingId"],
     }),
 

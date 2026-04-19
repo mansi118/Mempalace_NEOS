@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-primary: #000000;
+  --color-bg-near: #0A0A0A;
+  --color-bg-card: #111111;
+  --color-bg-elevated: #1C1C1C;
+  --color-bg-hover: #1A1A1A;
+  --color-border: #222222;
+  --color-border-subtle: #333333;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #888888;
+  --color-text-tertiary: #666666;
+  --color-brand: #00D4AA;
+  --color-brand-dark: #00A888;
+  --color-accent-red: #FF4136;
+  --color-accent-blue: #4A9EFF;
+  --color-accent-purple: #A855F7;
+  --color-accent-amber: #F59E0B;
+  --color-accent-green: #10B981;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.1); }
+  50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.2); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.card-glow:hover {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
