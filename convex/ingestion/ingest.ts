@@ -20,7 +20,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel.js";
 import { scanForPII } from "./pii.js";
 import { routeToWing, routeToRoom, classifyCategory, scoreConfidence } from "./route.js";
-import { embedOne, GEMINI_MODEL } from "../lib/gemini.js";
+import { embedOne, EMBEDDING_MODEL } from "../lib/qwen.js";
 import { callGeminiLlm } from "../lib/geminiLlm.js";
 import { CATEGORIES } from "../lib/enums.js";
 import { EXTRACTION_SYSTEM_PROMPT, parseExtractionResponse, type ExtractionItem } from "./extract.js";
@@ -180,12 +180,12 @@ export const ingestExchange = action({
         ].filter(Boolean).join("\n");
 
         try {
-          const embedding = await embedOne(textToEmbed, "RETRIEVAL_DOCUMENT");
+          const embedding = await embedOne(textToEmbed);
           await ctx.runMutation(api.palace.mutations.storeEmbedding, {
             closetId,
             palaceId: args.palaceId,
             embedding,
-            model: GEMINI_MODEL,
+            model: EMBEDDING_MODEL,
             modelVersion: "001",
           });
         } catch (e) {

@@ -1,16 +1,7 @@
 "use node";
-// Gemini embedding generation.
+// Qwen3-Embedding-8B via HuggingFace/Scaleway.
 //
-// "use node" is required because this module calls the Gemini HTTP API,
-// which needs process.env for the API key (only available in Node actions).
-//
-// Called from:
-//   - Phase 4 ingestion (embed each new closet after creation)
-//   - Phase 8 backfill cron (embed closets with status pending or failed)
-//
-// Architecture note (Tier 1 fix from ultrathink):
-//   The Gemini API call lives in lib/gemini.ts so that search.ts can call
-//   it directly without action-to-action calls (which Convex forbids).
+// "use node" required for HTTP API calls (process.env for HF_TOKEN).
 
 import { action } from "../_generated/server.js";
 import { api, internal } from "../_generated/api.js";
@@ -18,29 +9,23 @@ import { v } from "convex/values";
 import {
   embedBatchTexts,
   embedOne,
-  GEMINI_DIMENSIONS,
-  GEMINI_MODEL,
-} from "../lib/gemini.js";
-
-// ─── Single embedding (for search queries) ──────────────────────
+  EMBEDDING_DIMENSIONS,
+  EMBEDDING_MODEL,
+} from "../lib/qwen.js";
 
 export const embedQuery = action({
   args: { text: v.string() },
   handler: async (_ctx, { text }): Promise<number[]> => {
-    return embedOne(text, "RETRIEVAL_QUERY");
+    return embedOne(text);
   },
 });
-
-// ─── Single document embedding ──────────────────────────────────
 
 export const embedDocument = action({
   args: { text: v.string() },
   handler: async (_ctx, { text }): Promise<number[]> => {
-    return embedOne(text, "RETRIEVAL_DOCUMENT");
+    return embedOne(text);
   },
 });
-
-// ─── Batch embedding (for backfill) ─────────────────────────────
 
 export const embedBatch = action({
   args: { texts: v.array(v.string()) },
@@ -50,8 +35,6 @@ export const embedBatch = action({
   },
 });
 
-// ─── Embed + store a single closet ──────────────────────────────
-
 export const embedAndStoreCloset = action({
   args: {
     closetId: v.id("closets"),
@@ -60,16 +43,14 @@ export const embedAndStoreCloset = action({
   },
   handler: async (ctx, { closetId, palaceId, content }) => {
     try {
-      const embedding = await embedOne(content, "RETRIEVAL_DOCUMENT");
-
+      const embedding = await embedOne(content);
       await ctx.runMutation(api.palace.mutations.storeEmbedding, {
         closetId,
         palaceId,
         embedding,
-        model: GEMINI_MODEL,
-        modelVersion: "001",
+        model: EMBEDDING_MODEL,
+        modelVersion: "8B",
       });
-
       return { status: "ok" as const, closetId };
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -81,8 +62,6 @@ export const embedAndStoreCloset = action({
     }
   },
 });
-
-// ─── Backfill: embed pending AND failed closets ─────────────────
 
 export const backfillEmbeddings = action({
   args: {
@@ -138,7 +117,7 @@ export const backfillEmbeddings = action({
     for (let i = 0; i < all.length; i++) {
       const closet = all[i]!;
       const embedding = embeddings[i];
-      if (!embedding || embedding.length !== GEMINI_DIMENSIONS) {
+      if (!embedding || embedding.length !== EMBEDDING_DIMENSIONS) {
         await ctx.runMutation(internal.palace.mutations.setEmbeddingStatus, {
           closetId: closet._id as any,
           status: "failed",
@@ -152,8 +131,8 @@ export const backfillEmbeddings = action({
           closetId: closet._id as any,
           palaceId,
           embedding,
-          model: GEMINI_MODEL,
-          modelVersion: "001",
+          model: EMBEDDING_MODEL,
+          modelVersion: "8B",
         });
         succeeded++;
       } catch {

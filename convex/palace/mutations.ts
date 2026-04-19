@@ -783,8 +783,8 @@ export const storeEmbedding = mutation({
   },
   handler: async (ctx, args) => {
     // Dimension check — must match schema vectorIndex dimensions.
-    // Using GEMINI_DIMENSIONS from lib/gemini.ts (768 for gemini-embedding-001).
-    const EXPECTED_DIMS = 768;
+    // Qwen3-Embedding-8B: 4096 dims.
+    const EXPECTED_DIMS = 4096;
     if (args.embedding.length !== EXPECTED_DIMS) {
       throw new Error(
         `embedding must be ${EXPECTED_DIMS}-dim, got ${args.embedding.length}`,

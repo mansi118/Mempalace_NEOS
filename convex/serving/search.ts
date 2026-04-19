@@ -23,7 +23,7 @@ import { action } from "../_generated/server.js";
 import { internal } from "../_generated/api.js";
 import { v } from "convex/values";
 import type { Id, Doc } from "../_generated/dataModel.js";
-import { embedOne } from "../lib/gemini.js";
+import { embedOne } from "../lib/qwen.js";
 
 const DEFAULT_SIMILARITY_FLOOR = 0.5;
 const DEFAULT_LIMIT = 5;
@@ -90,7 +90,7 @@ export async function coreSearch(
 
   // 1. Embed query (asymmetric — RETRIEVAL_QUERY).
   //    Direct call to Gemini, not action-to-action.
-  const queryEmbedding = await embedOne(trimmed, "RETRIEVAL_QUERY");
+  const queryEmbedding = await embedOne(trimmed);
 
   // 2. Vector search — actions have ctx.vectorSearch.
   //    Filter by palaceId only; wing is post-filtered.
