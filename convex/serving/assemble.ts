@@ -87,7 +87,7 @@ export const assembleContext = action({
         query: trimmed,
         wingFilter,
         limit: estimatedResultsLimit,
-        similarityFloor: 0.5,
+        similarityFloor: 0.35,
       });
     }
 

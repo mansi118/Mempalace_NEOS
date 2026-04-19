@@ -782,8 +782,9 @@ export const storeEmbedding = mutation({
     modelVersion: v.string(),
   },
   handler: async (ctx, args) => {
-    // Dimension check — must match schema vectorIndex dimensions.
-    // Qwen3-Embedding-8B: 4096 dims.
+    // Dimension check — MUST match schema.ts vectorIndex dimensions AND lib/qwen.ts EMBEDDING_DIMENSIONS.
+    // If you change the embedding model, update all three locations.
+    // Qwen3-Embedding-8B via HuggingFace/Scaleway: 4096 dims.
     const EXPECTED_DIMS = 4096;
     if (args.embedding.length !== EXPECTED_DIMS) {
       throw new Error(

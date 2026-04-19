@@ -25,7 +25,9 @@ import { v } from "convex/values";
 import type { Id, Doc } from "../_generated/dataModel.js";
 import { embedOne } from "../lib/qwen.js";
 
-const DEFAULT_SIMILARITY_FLOOR = 0.5;
+// Qwen3-Embedding-8B produces lower similarity scores than Voyage/Gemini.
+// Calibrated from real query tests: relevant results score 0.4-0.8.
+const DEFAULT_SIMILARITY_FLOOR = 0.35;
 const DEFAULT_LIMIT = 5;
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -202,7 +204,7 @@ export async function coreSearch(
   if (results.length > 0) {
     const topScore = results[0]!.score;
     confidence =
-      topScore >= 0.8 ? "high" : topScore >= 0.65 ? "medium" : "low";
+      topScore >= 0.7 ? "high" : topScore >= 0.5 ? "medium" : "low";
     reason = "ok";
   }
 

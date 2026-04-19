@@ -171,10 +171,13 @@ export const ingestExchange = action({
           }
         }
 
-        // 4d. Embed extracted content + facts (not raw text).
-        //     This keeps embeddings within Gemini's 2K token limit.
+        // 4d. Embed with enriched context: wing/room + title + content + facts.
+        //     Prepending wing/room gives the embedding semantic grounding so
+        //     queries like "What is NeuralEDGE?" match the right closets.
         const textToEmbed = [
+          `[${item.wing}/${item.room}]`,
           item.title,
+          `Category: ${item.category}`,
           item.content,
           ...item.facts,
         ].filter(Boolean).join("\n");

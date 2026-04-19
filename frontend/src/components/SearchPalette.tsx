@@ -10,6 +10,7 @@ export default function SearchPalette({ palaceId, onClose }: Props) {
   const [results, setResults] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [confidence, setConfidence] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function SearchPalette({ palaceId, onClose }: Props) {
   const handleSearch = async () => {
     if (!query.trim()) return;
     setLoading(true);
+    setError("");
     try {
       const siteUrl =
         import.meta.env.VITE_CONVEX_SITE_URL ??
@@ -39,14 +41,18 @@ export default function SearchPalette({ palaceId, onClose }: Props) {
         }),
       });
       const data = await resp.json();
-      if (data.data?.results) {
+      if (data.error) {
+        setError(data.error.slice(0, 150));
+        setResults([]);
+      } else if (data.data?.results) {
         setResults(data.data.results);
         setConfidence(data.data.confidence ?? "");
       } else {
         setResults([]);
         setConfidence("low");
       }
-    } catch {
+    } catch (e: any) {
+      setError(e.message || "Search failed — check network connection");
       setResults([]);
     } finally {
       setLoading(false);
@@ -95,7 +101,15 @@ export default function SearchPalette({ palaceId, onClose }: Props) {
 
         {/* Results */}
         <div className="max-h-[50vh] overflow-y-auto">
-          {results === null && !loading && (
+          {error && (
+            <div className="px-5 py-6 text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-accent-red/10 border border-accent-red/20">
+                <span className="text-accent-red text-sm">Error: {error}</span>
+              </div>
+            </div>
+          )}
+
+          {results === null && !loading && !error && (
             <div className="px-5 py-8 text-center text-text-tertiary text-sm">
               Type a query and press Enter to search
             </div>

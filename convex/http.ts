@@ -111,7 +111,7 @@ http.route({
           latencyMs,
           extra: JSON.stringify({ tool }),
         });
-      } catch { /* audit must not break ops */ }
+      } catch (auditErr) { console.error("[audit] write failed:", auditErr); }
 
       return jsonResponse({ status: "ok", data: result });
 
@@ -131,7 +131,7 @@ http.route({
           latencyMs,
           extra: JSON.stringify({ tool, error: msg.slice(0, 200) }),
         });
-      } catch { /* audit must not break ops */ }
+      } catch (auditErr) { console.error("[audit] write failed:", auditErr); }
 
       const status = isDenied ? 403
         : msg.includes("not found") ? 404
@@ -305,18 +305,15 @@ async function dispatch(
     case "palace_add_closet": {
       // Enforce write access for the target wing + category.
       if (!perms.isAdmin) {
-        // Look up room → wing name.
         const room: any = await ctx.runQuery(api.palace.queries.getRoom, {
           roomId: params.roomId as Id<"rooms">,
         });
-        if (room) {
-          const wings: any[] = await ctx.runQuery(api.palace.queries.listWings, { palaceId });
-          const wing = wings.find((w: any) => w._id === room.wingId);
-          if (wing) {
-            enforceScope(perms, wing.name);
-            enforceWrite(perms, wing.name, params.category as string);
-          }
-        }
+        if (!room) throw new Error(`room ${params.roomId} not found`);
+        const wings: any[] = await ctx.runQuery(api.palace.queries.listWings, { palaceId });
+        const wing = wings.find((w: any) => w._id === room.wingId);
+        if (!wing) throw new Error(`wing for room ${params.roomId} not found`);
+        enforceScope(perms, wing.name);
+        enforceWrite(perms, wing.name, params.category as string);
       }
       return ctx.runMutation(api.palace.mutations.createCloset, {
         roomId: params.roomId as Id<"rooms">,
