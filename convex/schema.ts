@@ -71,14 +71,9 @@ const authorType = v.union(
   v.literal("system"),
 );
 
+
+
 const visibility = v.union(
-
-
-
-
-
-
-
 
   v.literal("default"),
   v.literal("restricted"),
@@ -310,7 +305,7 @@ export default defineSchema({
     closetId: v.id("closets"),
     palaceId: v.id("palaces"),
     wingId: v.id("wings"),
-    embedding: v.array(v.float64()),       // Qwen3-Embedding-8B: 4096 dims
+    embedding: v.array(v.float64()),       // Gemini Embedding: 768 dims
     model: v.string(),                     // "voyage-3-large"
     modelVersion: v.string(),              // "2026-04"
     generatedAt: v.number(),
@@ -318,7 +313,7 @@ export default defineSchema({
     .index("by_closet", ["closetId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
-      dimensions: 768,
+      dimensions: 4096,
       filterFields: ["palaceId", "wingId"],
     }),
 

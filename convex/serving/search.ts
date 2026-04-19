@@ -93,8 +93,9 @@ export async function coreSearch(
   const queryEmbedding = await embedOne(trimmed);
 
   // 2. Vector search — actions have ctx.vectorSearch.
-  //    Filter by palaceId only; wing is post-filtered.
-  const vectorHits: Array<{ _id: string; _score: number; closetId: string }> =
+  //    Returns { _id, _score } where _id is the closet_embeddings doc ID,
+  //    NOT the closetId. We resolve in step 3.
+  const vectorHits: Array<{ _id: string; _score: number }> =
     await ctx.vectorSearch("closet_embeddings", "by_embedding", {
       vector: queryEmbedding,
       limit: args.limit * 3, // overfetch for post-filtering
@@ -111,13 +112,33 @@ export async function coreSearch(
     };
   }
 
-  // 3. Build score map and collect closetIds.
+  // 3. Resolve embedding doc IDs → closetIds via a query.
+  //    vectorSearch only returns _id (embedding doc) + _score.
+  const embeddingIds = vectorHits.map((h) => h._id);
+  const scoreByEmbId = new Map(vectorHits.map((h) => [h._id, h._score]));
+
+  const resolved: Array<{ closetId: string; embeddingId: string } | null> =
+    await ctx.runQuery(internal.serving.enrich.resolveEmbeddingIds, {
+      embeddingIds,
+    });
+
   const closetIds: Id<"closets">[] = [];
   const scoreMap = new Map<string, number>();
 
-  for (const hit of vectorHits) {
-    closetIds.push(hit.closetId as Id<"closets">);
-    scoreMap.set(hit.closetId, hit._score);
+  for (const r of resolved) {
+    if (!r) continue;
+    closetIds.push(r.closetId as Id<"closets">);
+    scoreMap.set(r.closetId, scoreByEmbId.get(r.embeddingId) ?? 0);
+  }
+
+  if (closetIds.length === 0) {
+    return {
+      results: [],
+      confidence: "low",
+      reason: "no_valid_closets",
+      tokenEstimate: 0,
+      queryTimeMs: Date.now() - t0,
+    };
   }
 
   // 4. Enrich with closet + room/wing metadata.
