@@ -107,26 +107,26 @@ async def get_graphiti(palace_id: str) -> object:
         )
 
         # Configure LLM client for entity extraction.
-        # Uses OpenAI-compatible client with Gemini's base URL.
+        # Uses OpenAI-compatible client via HuggingFace router (Qwen).
         llm_client = None
-        gemini_key = os.environ.get("GEMINI_API_KEY", "")
+        hf_token = os.environ.get("HF_TOKEN", "") or os.environ.get("GEMINI_API_KEY", "")
         anthropic_key = cfg.anthropic_api_key
 
-        if gemini_key:
+        if hf_token:
             try:
                 from graphiti_core.llm_client import OpenAIClient, LLMConfig
 
                 llm_client = OpenAIClient(
                     config=LLMConfig(
-                        api_key=gemini_key,
-                        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-                        model="gemini-2.5-flash-preview-04-17",
-                        small_model="gemini-2.5-flash-preview-04-17",
+                        api_key=hf_token,
+                        base_url="https://router.huggingface.co/novita/v3/openai/",
+                        model="meta-llama/llama-4-scout-17b-16e-instruct",
+                        small_model="meta-llama/llama-4-scout-17b-16e-instruct",
                     ),
                 )
-                logger.info("graphiti_llm", provider="gemini-openai-compat")
+                logger.info("graphiti_llm", provider="huggingface-novita-llama4-scout")
             except Exception as e:
-                logger.warning("gemini openai-compat client failed", error=str(e))
+                logger.warning("huggingface llm client failed", error=str(e))
         elif anthropic_key:
             try:
                 from graphiti_core.llm_client.anthropic_client import AnthropicClient
@@ -139,9 +139,29 @@ async def get_graphiti(palace_id: str) -> object:
             except Exception as e:
                 logger.warning("anthropic client failed", error=str(e))
 
+        # Configure embedder (Graphiti needs its own embedder separate from LLM).
+        # Use Qwen3-Embedding-8B via HuggingFace/Scaleway (same HF_TOKEN).
+        embedder = None
+        if hf_token:
+            try:
+                from graphiti_core.embedder import OpenAIEmbedder, OpenAIEmbedderConfig
+
+                embedder = OpenAIEmbedder(
+                    config=OpenAIEmbedderConfig(
+                        api_key=hf_token,
+                        base_url="https://router.huggingface.co/scaleway/v1/",
+                        embedding_model="qwen3-embedding-8b",
+                        embedding_dim=4096,
+                    ),
+                )
+                logger.info("graphiti_embedder", provider="huggingface-scaleway-qwen")
+            except Exception as e:
+                logger.warning("huggingface embedder failed", error=str(e))
+
         g = Graphiti(
             graph_driver=driver,
             llm_client=llm_client,
+            embedder=embedder,
         )
         await g.build_indices_and_constraints()
 
