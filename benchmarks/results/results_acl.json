@@ -1,10 +1,10 @@
 {
   "name": "ACL Isolation Suite",
-  "timestamp": "2026-04-20T04:50:18.227Z",
+  "timestamp": "2026-04-20T04:55:44.012Z",
   "totalTests": 20,
-  "passed": 8,
-  "failed": 12,
-  "accuracy": 40,
+  "passed": 20,
+  "failed": 0,
+  "accuracy": 100,
   "results": [
     {
       "neopId": "_admin",
@@ -43,23 +43,23 @@
       "tool": "palace_status",
       "action": "recall",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "ok",
+      "passed": true
     },
     {
       "neopId": "aria",
       "tool": "palace_search",
       "action": "recall",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "ok",
+      "passed": true
     },
     {
       "neopId": "aria",
       "tool": "palace_remember",
       "action": "remember",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
+      "actualStatus": "ok",
       "passed": true
     },
     {
@@ -67,63 +67,63 @@
       "tool": "palace_retract_closet",
       "action": "erase",
       "expectedStatus": "denied",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "denied",
+      "passed": true
     },
     {
       "neopId": "neuralchat",
       "tool": "palace_status",
       "action": "recall",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "ok",
+      "passed": true
     },
     {
       "neopId": "neuralchat",
       "tool": "palace_search",
       "action": "recall",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "ok",
+      "passed": true
     },
     {
       "neopId": "neuralchat",
       "tool": "palace_remember",
       "action": "remember",
       "expectedStatus": "denied",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "denied",
+      "passed": true
     },
     {
       "neopId": "neuralchat",
       "tool": "palace_retract_closet",
       "action": "erase",
       "expectedStatus": "denied",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "denied",
+      "passed": true
     },
     {
       "neopId": "forge",
       "tool": "palace_status",
       "action": "recall",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "ok",
+      "passed": true
     },
     {
       "neopId": "forge",
       "tool": "palace_search",
       "action": "recall",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "ok",
+      "passed": true
     },
     {
       "neopId": "forge",
       "tool": "palace_remember",
       "action": "remember",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
+      "actualStatus": "ok",
       "passed": true
     },
     {
@@ -139,23 +139,23 @@
       "tool": "palace_status",
       "action": "recall",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "ok",
+      "passed": true
     },
     {
       "neopId": "recon",
       "tool": "palace_search",
       "action": "recall",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "ok",
+      "passed": true
     },
     {
       "neopId": "recon",
       "tool": "palace_remember",
       "action": "remember",
       "expectedStatus": "ok",
-      "actualStatus": "http_500",
+      "actualStatus": "ok",
       "passed": true
     },
     {
@@ -163,8 +163,8 @@
       "tool": "palace_retract_closet",
       "action": "erase",
       "expectedStatus": "denied",
-      "actualStatus": "http_500",
-      "passed": false
+      "actualStatus": "denied",
+      "passed": true
     }
   ]
 }

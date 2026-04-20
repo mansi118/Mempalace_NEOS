@@ -1,0 +1,414 @@
+{
+  "name": "PALACE Relevance Retrieval",
+  "timestamp": "2026-04-20T04:58:27.142Z",
+  "corpusSize": 429,
+  "queryCount": 35,
+  "metrics": {
+    "R@1": 0.0053,
+    "R@5": 0.0394,
+    "R@10": 0.078,
+    "MRR@10": 0.4155,
+    "nDCG@10": 0.2785,
+    "P@5": 0.2857,
+    "avgLatencyMs": 951,
+    "medianLatencyMs": 958,
+    "p95LatencyMs": 1515
+  },
+  "perQuery": [
+    {
+      "queryId": "e01",
+      "query": "What is NeuralEDGE?",
+      "R@5": 0,
+      "nDCG@10": 0.06362078819895171,
+      "mrr": 0.1,
+      "latencyMs": 1408,
+      "topResult": "jd705b769x4djcz53s3ba3wzrs854b1g",
+      "correct": false
+    },
+    {
+      "queryId": "e02",
+      "query": "Who is Rahul?",
+      "R@5": 0.037037037037037035,
+      "nDCG@10": 0.1884441521277154,
+      "mrr": 0.3333333333333333,
+      "latencyMs": 1299,
+      "topResult": "jd7629s3mhm780fan0r23rceb9854pse",
+      "correct": false
+    },
+    {
+      "queryId": "e03",
+      "query": "Who is Mansi?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 1028,
+      "topResult": "jd7ctdq1sq0bwzp9geddycc06s855q3d",
+      "correct": false
+    },
+    {
+      "queryId": "e04",
+      "query": "Who is Yatharth?",
+      "R@5": 0.037037037037037035,
+      "nDCG@10": 0.22009176629808017,
+      "mrr": 1,
+      "latencyMs": 1020,
+      "topResult": "jd73ce4q5vbb3xvzr2swbnxjnd8547zn",
+      "correct": true
+    },
+    {
+      "queryId": "e05",
+      "query": "Zoo Media client details",
+      "R@5": 0.038461538461538464,
+      "nDCG@10": 0.44006674047819433,
+      "mrr": 0.5,
+      "latencyMs": 1086,
+      "topResult": "jd70sbgtk8bxsgwzfs3zkf8fa58548ft",
+      "correct": false
+    },
+    {
+      "queryId": "e06",
+      "query": "What NEops does NeuralEDGE have?",
+      "R@5": 0,
+      "nDCG@10": 0.13961814555374907,
+      "mrr": 0.14285714285714285,
+      "latencyMs": 958,
+      "topResult": "jd7bs5stjkdp15hpbwgr5na5zn855h04",
+      "correct": false
+    },
+    {
+      "queryId": "e07",
+      "query": "ICD NEop for Zoo Media",
+      "R@5": 0.047058823529411764,
+      "nDCG@10": 0.7136540102475308,
+      "mrr": 0.5,
+      "latencyMs": 866,
+      "topResult": "jd712a7as5gw3h00ezbfjwfa1n8540ya",
+      "correct": false
+    },
+    {
+      "queryId": "e08",
+      "query": "NEOS platform architecture",
+      "R@5": 0.2,
+      "nDCG@10": 0.31954962756492084,
+      "mrr": 0.25,
+      "latencyMs": 831,
+      "topResult": "jd720cxnn5dspch4shxqrahyj9854f9r",
+      "correct": false
+    },
+    {
+      "queryId": "e09",
+      "query": "OpenClaw runtime",
+      "R@5": 0.09090909090909091,
+      "nDCG@10": 0.5352543167750639,
+      "mrr": 1,
+      "latencyMs": 1035,
+      "topResult": "jd73gb5vxnbqgdase2w6cr5mwx854xcd",
+      "correct": true
+    },
+    {
+      "queryId": "e10",
+      "query": "NeP marketplace",
+      "R@5": 0.07692307692307693,
+      "nDCG@10": 0.1731866333482261,
+      "mrr": 0.25,
+      "latencyMs": 1048,
+      "topResult": "jd70zt47zct3en5kj62c7ve46s854bc8",
+      "correct": false
+    },
+    {
+      "queryId": "m01",
+      "query": "What tech stack does NEOS use?",
+      "R@5": 0.06382978723404255,
+      "nDCG@10": 0.4634464183177906,
+      "mrr": 0.5,
+      "latencyMs": 910,
+      "topResult": "jd7b7gbmxjf04aj9kwb06j91qn854je8",
+      "correct": false
+    },
+    {
+      "queryId": "m02",
+      "query": "Zoo Media pricing retainer",
+      "R@5": 0.012658227848101266,
+      "nDCG@10": 0.2866919347890071,
+      "mrr": 0.5,
+      "latencyMs": 1127,
+      "topResult": "jd70sbgtk8bxsgwzfs3zkf8fa58548ft",
+      "correct": false
+    },
+    {
+      "queryId": "m03",
+      "query": "Convex vs Supabase",
+      "R@5": 0.05405405405405406,
+      "nDCG@10": 0.4729327934832575,
+      "mrr": 1,
+      "latencyMs": 993,
+      "topResult": "jd7dgnjm4yab67erf49ssx16t9854z5n",
+      "correct": true
+    },
+    {
+      "queryId": "m04",
+      "query": "ICP ideal customer profile",
+      "R@5": 0.058823529411764705,
+      "nDCG@10": 0.1635413866202963,
+      "mrr": 0.2,
+      "latencyMs": 1080,
+      "topResult": "jd72dvn1mdas9t5n6whygx6hqd8558vr",
+      "correct": false
+    },
+    {
+      "queryId": "m05",
+      "query": "cold email outreach strategy",
+      "R@5": 0.045454545454545456,
+      "nDCG@10": 0.18340980524840012,
+      "mrr": 0.3333333333333333,
+      "latencyMs": 1515,
+      "topResult": "jd71twr08csjk804x599s97y1s855qbs",
+      "correct": false
+    },
+    {
+      "queryId": "m06",
+      "query": "NDA MSA SOW legal templates",
+      "R@5": 0.15384615384615385,
+      "nDCG@10": 0.31204907722178066,
+      "mrr": 0.5,
+      "latencyMs": -470,
+      "topResult": "jd795673vncep95pexfhf065v5855592",
+      "correct": false
+    },
+    {
+      "queryId": "m07",
+      "query": "build3 fundraising details",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 838,
+      "topResult": "jd73wva4g4ejfzkpn1kzsvxmk1855wan",
+      "correct": false
+    },
+    {
+      "queryId": "m08",
+      "query": "Context Vault memory system",
+      "R@5": 0.05714285714285714,
+      "nDCG@10": 0.494639655562801,
+      "mrr": 1,
+      "latencyMs": 1059,
+      "topResult": "jd76wr4c4byyyn917gnfv48rt1854fcd",
+      "correct": true
+    },
+    {
+      "queryId": "m09",
+      "query": "GTM go to market strategy",
+      "R@5": 0,
+      "nDCG@10": 0.06943122193677727,
+      "mrr": 0.125,
+      "latencyMs": 1044,
+      "topResult": "jd72dvn1mdas9t5n6whygx6hqd8558vr",
+      "correct": false
+    },
+    {
+      "queryId": "m10",
+      "query": "Aria SDR agent capabilities",
+      "R@5": 0.030303030303030304,
+      "nDCG@10": 0.3093521167391581,
+      "mrr": 0.3333333333333333,
+      "latencyMs": 3189,
+      "topResult": "jd7b1e5qzm136r8kqfd37yswk9855rbw",
+      "correct": false
+    },
+    {
+      "queryId": "m11",
+      "query": "Emma WhatsApp shopping agent",
+      "R@5": 0.04132231404958678,
+      "nDCG@10": 0.9305687780632227,
+      "mrr": 1,
+      "latencyMs": 872,
+      "topResult": "jd70zt47zct3en5kj62c7ve46s854bc8",
+      "correct": true
+    },
+    {
+      "queryId": "m12",
+      "query": "Axe content engine",
+      "R@5": 0.045454545454545456,
+      "nDCG@10": 0.7015099647232446,
+      "mrr": 0.5,
+      "latencyMs": 844,
+      "topResult": "jd708g5mnfxkvh8p5dv7cncz4n854te2",
+      "correct": false
+    },
+    {
+      "queryId": "m13",
+      "query": "AWS EC2 infrastructure",
+      "R@5": 0.05405405405405406,
+      "nDCG@10": 0.4985723557253838,
+      "mrr": 1,
+      "latencyMs": 817,
+      "topResult": "jd705b769x4djcz53s3ba3wzrs854b1g",
+      "correct": true
+    },
+    {
+      "queryId": "m14",
+      "query": "Synlex Technologies company",
+      "R@5": 0.030303030303030304,
+      "nDCG@10": 0.38363315291837646,
+      "mrr": 1,
+      "latencyMs": 794,
+      "topResult": "jd70ha1ehkc71x8v5gj0sk1xj9854f1d",
+      "correct": true
+    },
+    {
+      "queryId": "m15",
+      "query": "brand colors design system",
+      "R@5": 0.02197802197802198,
+      "nDCG@10": 0.2583297509898471,
+      "mrr": 0.25,
+      "latencyMs": 1031,
+      "topResult": "jd71k615gv812b8yv87ajbgaad8549sw",
+      "correct": false
+    },
+    {
+      "queryId": "h01",
+      "query": "How does NeuralEDGE make money?",
+      "R@5": 0,
+      "nDCG@10": 0.20641593223508903,
+      "mrr": 0.14285714285714285,
+      "latencyMs": 851,
+      "topResult": "jd7c2z75pacw99j4egapk6b5q5854hsq",
+      "correct": false
+    },
+    {
+      "queryId": "h02",
+      "query": "What problems does NEOS solve for clients?",
+      "R@5": 0.011235955056179775,
+      "nDCG@10": 0.3570764765963919,
+      "mrr": 1,
+      "latencyMs": 1011,
+      "topResult": "jd7fznpm8dn3grhx576t3bp0ms854pt9",
+      "correct": true
+    },
+    {
+      "queryId": "h03",
+      "query": "How are NEops connected to the marketplace?",
+      "R@5": 0.08695652173913043,
+      "nDCG@10": 0.5716349530699038,
+      "mrr": 0.5,
+      "latencyMs": 793,
+      "topResult": "jd71rz2dmynp48w0wd7h08gt6d854w4f",
+      "correct": false
+    },
+    {
+      "queryId": "h04",
+      "query": "What was rejected and why?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 1097,
+      "topResult": "jd765y8z9a0164ym07wcyzsczn854cbg",
+      "correct": false
+    },
+    {
+      "queryId": "h05",
+      "query": "How does the team communicate?",
+      "R@5": 0.037037037037037035,
+      "nDCG@10": 0.09478836436955078,
+      "mrr": 0.25,
+      "latencyMs": 908,
+      "topResult": "jd74sbajmm4jebh7vpqjvd0ced855s26",
+      "correct": false
+    },
+    {
+      "queryId": "h06",
+      "query": "What is the pitch strategy for agencies?",
+      "R@5": 0.04878048780487805,
+      "nDCG@10": 0.19518900079066107,
+      "mrr": 0.3333333333333333,
+      "latencyMs": 787,
+      "topResult": "jd7emw2x74pdm98pqhmaxchq0n854x3r",
+      "correct": false
+    },
+    {
+      "queryId": "h07",
+      "query": "NEXUS and ALTE B2B intelligence",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 584,
+      "correct": false
+    },
+    {
+      "queryId": "h08",
+      "query": "How does memory work in NEOS?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 367,
+      "correct": false
+    },
+    {
+      "queryId": "h09",
+      "query": "What are the deployment options?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 349,
+      "correct": false
+    },
+    {
+      "queryId": "h10",
+      "query": "Explain the deal flow from lead to contract",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 332,
+      "correct": false
+    }
+  ],
+  "byDifficulty": {
+    "easy": {
+      "total": 10,
+      "r1": 2,
+      "r5": 7
+    },
+    "medium": {
+      "total": 15,
+      "r1": 5,
+      "r5": 13
+    },
+    "hard": {
+      "total": 10,
+      "r1": 1,
+      "r5": 4
+    }
+  },
+  "byCategory": {
+    "entity": {
+      "total": 15,
+      "r1": 4,
+      "r5": 11
+    },
+    "fact": {
+      "total": 12,
+      "r1": 2,
+      "r5": 8
+    },
+    "decision": {
+      "total": 1,
+      "r1": 1,
+      "r5": 1
+    },
+    "procedure": {
+      "total": 2,
+      "r1": 0,
+      "r5": 2
+    },
+    "reasoning": {
+      "total": 5,
+      "r1": 1,
+      "r5": 2
+    }
+  },
+  "unanswerable": {
+    "correct": 5,
+    "total": 5,
+    "accuracy": 1
+  }
+}
