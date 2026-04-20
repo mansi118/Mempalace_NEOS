@@ -1,0 +1,170 @@
+{
+  "name": "ACL Isolation Suite",
+  "timestamp": "2026-04-20T04:50:18.227Z",
+  "totalTests": 20,
+  "passed": 8,
+  "failed": 12,
+  "accuracy": 40,
+  "results": [
+    {
+      "neopId": "_admin",
+      "tool": "palace_status",
+      "action": "recall",
+      "expectedStatus": "ok",
+      "actualStatus": "ok",
+      "passed": true
+    },
+    {
+      "neopId": "_admin",
+      "tool": "palace_search",
+      "action": "recall",
+      "expectedStatus": "ok",
+      "actualStatus": "ok",
+      "passed": true
+    },
+    {
+      "neopId": "_admin",
+      "tool": "palace_remember",
+      "action": "remember",
+      "expectedStatus": "ok",
+      "actualStatus": "ok",
+      "passed": true
+    },
+    {
+      "neopId": "_admin",
+      "tool": "palace_retract_closet",
+      "action": "erase",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": true
+    },
+    {
+      "neopId": "aria",
+      "tool": "palace_status",
+      "action": "recall",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "aria",
+      "tool": "palace_search",
+      "action": "recall",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "aria",
+      "tool": "palace_remember",
+      "action": "remember",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": true
+    },
+    {
+      "neopId": "aria",
+      "tool": "palace_retract_closet",
+      "action": "erase",
+      "expectedStatus": "denied",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "neuralchat",
+      "tool": "palace_status",
+      "action": "recall",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "neuralchat",
+      "tool": "palace_search",
+      "action": "recall",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "neuralchat",
+      "tool": "palace_remember",
+      "action": "remember",
+      "expectedStatus": "denied",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "neuralchat",
+      "tool": "palace_retract_closet",
+      "action": "erase",
+      "expectedStatus": "denied",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "forge",
+      "tool": "palace_status",
+      "action": "recall",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "forge",
+      "tool": "palace_search",
+      "action": "recall",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "forge",
+      "tool": "palace_remember",
+      "action": "remember",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": true
+    },
+    {
+      "neopId": "forge",
+      "tool": "palace_retract_closet",
+      "action": "erase",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": true
+    },
+    {
+      "neopId": "recon",
+      "tool": "palace_status",
+      "action": "recall",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "recon",
+      "tool": "palace_search",
+      "action": "recall",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": false
+    },
+    {
+      "neopId": "recon",
+      "tool": "palace_remember",
+      "action": "remember",
+      "expectedStatus": "ok",
+      "actualStatus": "http_500",
+      "passed": true
+    },
+    {
+      "neopId": "recon",
+      "tool": "palace_retract_closet",
+      "action": "erase",
+      "expectedStatus": "denied",
+      "actualStatus": "http_500",
+      "passed": false
+    }
+  ]
+}

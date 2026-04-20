@@ -1,0 +1,1860 @@
+{
+  "name": "PALACE Retrieval (self-corpus)",
+  "timestamp": "2026-04-20T04:52:42.064Z",
+  "corpusSize": 425,
+  "queryCount": 200,
+  "metrics": {
+    "R@1": 0.065,
+    "R@5": 0.105,
+    "R@10": 0.125,
+    "MRR@10": 0.0793,
+    "nDCG@10": 0.09,
+    "P@5": 0.021,
+    "avgLatencyMs": 530,
+    "medianLatencyMs": 338,
+    "p95LatencyMs": 1417
+  },
+  "perQuery": [
+    {
+      "queryId": "q_258",
+      "query": "What is Positioning?",
+      "R@5": 0,
+      "nDCG@10": 0.3562071871080222,
+      "mrr": 0.16666666666666666,
+      "latencyMs": 2710,
+      "topResult": "jd758d5hg7c2d5v39dghq59a3h855nx6",
+      "correct": false
+    },
+    {
+      "queryId": "q_396",
+      "query": "ICD NEop — The First Delivery",
+      "R@5": 1,
+      "nDCG@10": 0.38685280723454163,
+      "mrr": 0.2,
+      "latencyMs": 1745,
+      "topResult": "jd76whseqeyza9y2kshdpt1gps855sf7",
+      "correct": false
+    },
+    {
+      "queryId": "q_900",
+      "query": "Three-Layer Architecture (v2)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 1417,
+      "topResult": "jd7axpfvrft5z4ecgzc5dvm2vh854ybf",
+      "correct": false
+    },
+    {
+      "queryId": "q_235",
+      "query": "3-Tier Monitoring",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 2636,
+      "topResult": "jd77c57sk1hz9srgwdbfgvqeax855m1k",
+      "correct": false
+    },
+    {
+      "queryId": "q_382",
+      "query": "What is Akhilesh's Strategic Mandate?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 1045,
+      "topResult": "jd7ad93nm3y5amx15pp1j58zen855gjc",
+      "correct": false
+    },
+    {
+      "queryId": "q_433",
+      "query": "- **Trigger:** Akhilesh's social media post — \"real ROI in 2026 comes from Invisible AI — where tech handles grunt work of media buying, allowing creative minds to focus on cultural nuance\"",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 445,
+      "topResult": "jd7ffws0rn374hvsvmzg3rzrzd855f80",
+      "correct": true
+    },
+    {
+      "queryId": "q_266",
+      "query": "What is 3. Visual Shopping Experience?",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 832,
+      "topResult": "jd79esaxfkz7a0aqh9qpzee83x854at8",
+      "correct": true
+    },
+    {
+      "queryId": "q_384",
+      "query": "- Evolving Zoo Media into a \"Marketing Technology Organization\"",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 1011,
+      "topResult": "jd77cjj81hh5z53pfb2926v791855yz0",
+      "correct": true
+    },
+    {
+      "queryId": "q_292",
+      "query": "- Reduce customer service staff need",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 889,
+      "topResult": "jd70w2nbe7ys8w223bn93hbe1n855kt1",
+      "correct": true
+    },
+    {
+      "queryId": "q_378",
+      "query": "What is The 8 Specialist Agencies?",
+      "R@5": 0,
+      "nDCG@10": 0.3562071871080222,
+      "mrr": 0.16666666666666666,
+      "latencyMs": 1094,
+      "topResult": "jd75jrswy8cfgr99kc26a66h8d854dsz",
+      "correct": false
+    },
+    {
+      "queryId": "q_293",
+      "query": "Memory Architecture",
+      "R@5": 1,
+      "nDCG@10": 0.5,
+      "mrr": 0.3333333333333333,
+      "latencyMs": 967,
+      "topResult": "jd7011717mk3e4943xmpax6vcx854pp6",
+      "correct": false
+    },
+    {
+      "queryId": "q_80",
+      "query": "Architecture",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 1027,
+      "topResult": "jd73wva4g4ejfzkpn1kzsvxmk1855wan",
+      "correct": false
+    },
+    {
+      "queryId": "q_554",
+      "query": "- Deep-dive into client's workflows, teams, and operational bottlenecks",
+      "R@5": 1,
+      "nDCG@10": 0.6309297535714575,
+      "mrr": 0.5,
+      "latencyMs": 781,
+      "topResult": "jd76sma1xe2rwa9tngppr86a5h855fav",
+      "correct": false
+    },
+    {
+      "queryId": "q_458",
+      "query": "Marketplace follow-up framing",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 1004,
+      "topResult": "jd71twr08csjk804x599s97y1s855qbs",
+      "correct": false
+    },
+    {
+      "queryId": "q_216",
+      "query": "Not 10, not 10,000 — mid-range initially",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 784,
+      "topResult": "jd7axpfvrft5z4ecgzc5dvm2vh854ybf",
+      "correct": true
+    },
+    {
+      "queryId": "q_286",
+      "query": "What is Sample Conversation Flow?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 838,
+      "topResult": "jd79x2w213kyj934wjg1zj7m0x855x69",
+      "correct": false
+    },
+    {
+      "queryId": "q_184",
+      "query": "- **Skill:** `neuraledge-brand`",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 975,
+      "topResult": "jd77pgts57wcs0yarhwb8exh5d855pxe",
+      "correct": true
+    },
+    {
+      "queryId": "q_465",
+      "query": "What is Identity?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 847,
+      "topResult": "jd7ctdq1sq0bwzp9geddycc06s855q3d",
+      "correct": false
+    },
+    {
+      "queryId": "q_317",
+      "query": "- LinkedIn thought leadership posts",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 1054,
+      "topResult": "jd7camkfregc0thtcwdt0ahyfs855p3m",
+      "correct": true
+    },
+    {
+      "queryId": "q_285",
+      "query": "| Layer | Technology |",
+      "R@5": 1,
+      "nDCG@10": 0.43067655807339306,
+      "mrr": 0.25,
+      "latencyMs": 1013,
+      "topResult": "jd75ctd6pse39y3caxdddqezvn855cqd",
+      "correct": false
+    },
+    {
+      "queryId": "q_550",
+      "query": "What is Team Communications?",
+      "R@5": 1,
+      "nDCG@10": 0.43067655807339306,
+      "mrr": 0.25,
+      "latencyMs": 1128,
+      "topResult": "jd7f2wbr4ashtaxrsnpn2agb4x8546fm",
+      "correct": false
+    },
+    {
+      "queryId": "q_98",
+      "query": "What is Per-Agent Configuration?",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 903,
+      "topResult": "jd78ejx4jqr2k0yg6bmw1m7hqh854mnw",
+      "correct": true
+    },
+    {
+      "queryId": "q_74",
+      "query": "Why Unforked",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 836,
+      "topResult": "jd765y8z9a0164ym07wcyzsczn854cbg",
+      "correct": false
+    },
+    {
+      "queryId": "q_395",
+      "query": "What is ICD NEop — The First Delivery?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 451,
+      "correct": false
+    },
+    {
+      "queryId": "q_322",
+      "query": "Self-Optimization Loop",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 460,
+      "correct": false
+    },
+    {
+      "queryId": "q_152",
+      "query": "What is Customer Connect Emma (WhatsApp Shopping)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 322,
+      "correct": false
+    },
+    {
+      "queryId": "q_172",
+      "query": "- **Full detail:** See `03_clients/04_zoo_icd_neop",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 356,
+      "correct": false
+    },
+    {
+      "queryId": "q_267",
+      "query": "3. Visual Shopping Experience",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 349,
+      "correct": false
+    },
+    {
+      "queryId": "q_474",
+      "query": "2. Visual Direction",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 307,
+      "correct": false
+    },
+    {
+      "queryId": "q_208",
+      "query": "- 5 \"Sales Ops\" roles open → their CRM is broken",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 314,
+      "correct": false
+    },
+    {
+      "queryId": "q_306",
+      "query": "Future Enhancements (pipeline)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 335,
+      "correct": false
+    },
+    {
+      "queryId": "q_158",
+      "query": "What is Chief of Staff (CoS) NEop?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 312,
+      "correct": false
+    },
+    {
+      "queryId": "q_174",
+      "query": "AI Training Workshop Curricula",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 313,
+      "correct": false
+    },
+    {
+      "queryId": "q_370",
+      "query": "GTM Targets",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 304,
+      "correct": false
+    },
+    {
+      "queryId": "q_483",
+      "query": "- Tracks which content performs best",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 545,
+      "correct": false
+    },
+    {
+      "queryId": "q_88",
+      "query": "What is Gateway?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 312,
+      "correct": false
+    },
+    {
+      "queryId": "q_374",
+      "query": "**Zoo Media is India's largest independent agency network** and NeuralEDGE's most active client/prospect",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 310,
+      "correct": false
+    },
+    {
+      "queryId": "q_376",
+      "query": "Company Fundamentals",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 317,
+      "correct": false
+    },
+    {
+      "queryId": "q_380",
+      "query": "What is Key Stakeholders?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 331,
+      "correct": false
+    },
+    {
+      "queryId": "q_54",
+      "query": "ALTE (Person-level B2B Intelligence)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 324,
+      "correct": false
+    },
+    {
+      "queryId": "q_75",
+      "query": "NeuralEDGE intentionally does NOT fork OpenClaw — it uses it as-is with extensions via plugins and workspace configs",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 329,
+      "correct": false
+    },
+    {
+      "queryId": "q_383",
+      "query": "Akhilesh's Strategic Mandate",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 348,
+      "correct": false
+    },
+    {
+      "queryId": "q_204",
+      "query": "Data Sources",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 529,
+      "correct": false
+    },
+    {
+      "queryId": "q_495",
+      "query": "- **Monday 9am:** ICD has already parsed all 12 briefs overnight, created content specs, and generated first-draft visual directions",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 309,
+      "correct": false
+    },
+    {
+      "queryId": "q_563",
+      "query": "What is Zoo Media Pricing Options (3 entry points)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 314,
+      "correct": false
+    },
+    {
+      "queryId": "q_16",
+      "query": "What is Four Foundational NEOPS (Nervous System)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 318,
+      "correct": false
+    },
+    {
+      "queryId": "q_168",
+      "query": "Legal Document Toolkit",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 296,
+      "correct": false
+    },
+    {
+      "queryId": "q_303",
+      "query": "Relationship to NEOS / NEops",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 324,
+      "correct": false
+    },
+    {
+      "queryId": "q_540",
+      "query": "- **Role:** Co-Founder & CTO",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 560,
+      "correct": false
+    },
+    {
+      "queryId": "q_198",
+      "query": "NEXUS and ALTE are complementary systems designed to give NeuralEDGE complete B2B sales intelligence",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 339,
+      "correct": false
+    },
+    {
+      "queryId": "q_57",
+      "query": "Neural (ML's Personal AI Executive Assistant)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 339,
+      "correct": false
+    },
+    {
+      "queryId": "q_7",
+      "query": "Three Purpose-Built Apps",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 351,
+      "correct": false
+    },
+    {
+      "queryId": "q_487",
+      "query": "What is Agency-Specific Adaptations?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 313,
+      "correct": false
+    },
+    {
+      "queryId": "q_6",
+      "query": "What is Three Purpose-Built Apps?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 305,
+      "correct": false
+    },
+    {
+      "queryId": "q_501",
+      "query": "Strategic rationale for ICD as Tier 1 build for Zoo:",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 312,
+      "correct": false
+    },
+    {
+      "queryId": "q_313",
+      "query": "What is Core Stack?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 340,
+      "correct": false
+    },
+    {
+      "queryId": "q_109",
+      "query": "Updates",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 313,
+      "correct": false
+    },
+    {
+      "queryId": "q_492",
+      "query": "Priya is a Content Manager at FoxyMoron managing 12 brand accounts",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 342,
+      "correct": false
+    },
+    {
+      "queryId": "q_334",
+      "query": "What is Budget Allocation?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 317,
+      "correct": false
+    },
+    {
+      "queryId": "q_381",
+      "query": "Key Stakeholders",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 343,
+      "correct": false
+    },
+    {
+      "queryId": "q_360",
+      "query": "| 50–100x | 7% | 30 min | Day 1 |",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 32,
+      "correct": false
+    },
+    {
+      "queryId": "q_291",
+      "query": "For Business",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": -992,
+      "correct": false
+    },
+    {
+      "queryId": "q_470",
+      "query": "> \"ICD doesn't replace your content creators",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 312,
+      "correct": false
+    },
+    {
+      "queryId": "q_330",
+      "query": "What is Content Pillars (NeuralEDGE internal)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 335,
+      "correct": false
+    },
+    {
+      "queryId": "q_386",
+      "query": "The Central Narrative (Revenue Per Employee)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 309,
+      "correct": false
+    },
+    {
+      "queryId": "q_46",
+      "query": "- Tier 0 executive orchestrator",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 309,
+      "correct": false
+    },
+    {
+      "queryId": "q_32",
+      "query": "Hierarchy (CoS as Meta-Orchestrator)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 1723,
+      "correct": false
+    },
+    {
+      "queryId": "q_479",
+      "query": "4. Multi-format Adaptation",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 315,
+      "correct": false
+    },
+    {
+      "queryId": "q_97",
+      "query": "Hardening Layers",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 310,
+      "correct": false
+    },
+    {
+      "queryId": "q_203",
+      "query": "What is Data Sources?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 337,
+      "correct": false
+    },
+    {
+      "queryId": "q_541",
+      "query": "What is Mansi Gambhir?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 328,
+      "correct": false
+    },
+    {
+      "queryId": "q_393",
+      "query": "Writing Frameworks Applied",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 302,
+      "correct": false
+    },
+    {
+      "queryId": "q_65",
+      "query": "NE-GTM",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 298,
+      "correct": false
+    },
+    {
+      "queryId": "q_18",
+      "query": "Every NEOS deployment ships with these four:",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 314,
+      "correct": false
+    },
+    {
+      "queryId": "q_252",
+      "query": "Both NEXUS and ALTE can be productized:",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 330,
+      "correct": false
+    },
+    {
+      "queryId": "q_324",
+      "query": "NeuralEDGE Internal Use Case",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 314,
+      "correct": false
+    },
+    {
+      "queryId": "q_855",
+      "query": "- **Template File:** `NE-MSA-Template",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 381,
+      "correct": false
+    },
+    {
+      "queryId": "q_829",
+      "query": "\"Our sales pipeline, prospect research, email sequences, and internal ops are powered by NEops deployed inside AgentSpace",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 334,
+      "correct": false
+    },
+    {
+      "queryId": "q_556",
+      "query": "**Two-Tier Engagement Model:**",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 305,
+      "correct": false
+    },
+    {
+      "queryId": "q_830",
+      "query": "What is Case Study 2: Shinon Global (Flagship)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 336,
+      "correct": false
+    },
+    {
+      "queryId": "q_821",
+      "query": "What is 07 — Lessons?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 324,
+      "correct": false
+    },
+    {
+      "queryId": "q_226",
+      "query": "What is 6 Pipeline Stages?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 354,
+      "correct": false
+    },
+    {
+      "queryId": "q_819",
+      "query": "06 — Strategic Priorities & Use of Funds",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 320,
+      "correct": false
+    },
+    {
+      "queryId": "q_239",
+      "query": "- NEXUS: free sources only (scraping-based)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 359,
+      "correct": false
+    },
+    {
+      "queryId": "q_812",
+      "query": "What is 04 — Values?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 481,
+      "correct": false
+    },
+    {
+      "queryId": "q_792",
+      "query": "- HTML file (primary format)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 318,
+      "correct": false
+    },
+    {
+      "queryId": "q_805",
+      "query": "01 — Problem Statement",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 315,
+      "correct": false
+    },
+    {
+      "queryId": "q_219",
+      "query": "- Primary: NeuralEDGE internal tool for Recon/NEOS",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 324,
+      "correct": false
+    },
+    {
+      "queryId": "q_808",
+      "query": "02 — The Solution",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 343,
+      "correct": false
+    },
+    {
+      "queryId": "q_357",
+      "query": "- **Lead Response TAT:** 24–48 hours → 30 minutes (50–100x improvement)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 310,
+      "correct": false
+    },
+    {
+      "queryId": "q_385",
+      "query": "What is The Central Narrative (Revenue Per Employee)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 400,
+      "correct": false
+    },
+    {
+      "queryId": "q_976",
+      "query": "- **Convex** — Source of truth, reactive DB, real-time subscriptions",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 322,
+      "correct": false
+    },
+    {
+      "queryId": "q_269",
+      "query": "What is 4. Personalized Experience?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 1485,
+      "correct": false
+    },
+    {
+      "queryId": "q_123",
+      "query": "What is CRM NeP?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 333,
+      "correct": false
+    },
+    {
+      "queryId": "q_127",
+      "query": "Neural (ML's Personal AI Executive Assistant)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 353,
+      "correct": false
+    },
+    {
+      "queryId": "q_118",
+      "query": "CORTEX-PALACE v3",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 357,
+      "correct": false
+    },
+    {
+      "queryId": "q_230",
+      "query": "Each profile has 8 structured blocks covering:",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 383,
+      "correct": false
+    },
+    {
+      "queryId": "q_273",
+      "query": "5. Order Management",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 323,
+      "correct": false
+    },
+    {
+      "queryId": "q_777",
+      "query": "Recurring Stat Row (Proof Points)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 566,
+      "correct": false
+    },
+    {
+      "queryId": "q_210",
+      "query": "Graph Schema (Neo4j)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 351,
+      "correct": false
+    },
+    {
+      "queryId": "q_776",
+      "query": "What is Recurring Stat Row (Proof Points)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 319,
+      "correct": false
+    },
+    {
+      "queryId": "q_793",
+      "query": "What is What build3 Is?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 344,
+      "correct": false
+    },
+    {
+      "queryId": "q_242",
+      "query": "**The Integration Point (Clean):**",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 346,
+      "correct": false
+    },
+    {
+      "queryId": "q_213",
+      "query": "Deliverable Options",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 319,
+      "correct": false
+    },
+    {
+      "queryId": "q_873",
+      "query": "Designed for future automation via **NE-GTM NEop** (Go-to-Market automation)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 319,
+      "correct": false
+    },
+    {
+      "queryId": "q_361",
+      "query": "What is Prospects & Pipeline (from past chats)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 319,
+      "correct": false
+    },
+    {
+      "queryId": "q_84",
+      "query": "| Channel | Plugin | Status |",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 340,
+      "correct": false
+    },
+    {
+      "queryId": "q_428",
+      "query": "What is 1. Main Pitch Deck (HTML, 105 slides)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 501,
+      "correct": false
+    },
+    {
+      "queryId": "q_894",
+      "query": "v2: Context Vault (evolved)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 320,
+      "correct": false
+    },
+    {
+      "queryId": "q_787",
+      "query": "What is Additional clients (compact one-liners when needed)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 468,
+      "correct": false
+    },
+    {
+      "queryId": "q_278",
+      "query": "7. Customer Service",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 348,
+      "correct": false
+    },
+    {
+      "queryId": "q_70",
+      "query": "What is What OpenClaw Is?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 350,
+      "correct": false
+    },
+    {
+      "queryId": "q_737",
+      "query": "- \"Chatbots need humans to use them",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 345,
+      "correct": false
+    },
+    {
+      "queryId": "q_1000",
+      "query": "Model Cost / Performance Notes",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 334,
+      "correct": false
+    },
+    {
+      "queryId": "q_551",
+      "query": "Team Communications",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 528,
+      "correct": false
+    },
+    {
+      "queryId": "q_13",
+      "query": "What is 11-Layer Architecture?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 372,
+      "correct": false
+    },
+    {
+      "queryId": "q_167",
+      "query": "What is Legal Document Toolkit?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 338,
+      "correct": false
+    },
+    {
+      "queryId": "q_931",
+      "query": "What is Palace Hierarchy?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 317,
+      "correct": false
+    },
+    {
+      "queryId": "q_129",
+      "query": "What is TeamPulse?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 365,
+      "correct": false
+    },
+    {
+      "queryId": "q_854",
+      "query": "2. MSA (Master Services Agreement)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 314,
+      "correct": false
+    },
+    {
+      "queryId": "q_390",
+      "query": "Pricing Options Offered to Zoo Media",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 367,
+      "correct": false
+    },
+    {
+      "queryId": "q_328",
+      "query": "What is Key Metrics Tracked?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 318,
+      "correct": false
+    },
+    {
+      "queryId": "q_759",
+      "query": "What is Zoo Media Deck Frameworks?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 315,
+      "correct": false
+    },
+    {
+      "queryId": "q_763",
+      "query": "HTML Deck Technical Stack",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 320,
+      "correct": false
+    },
+    {
+      "queryId": "q_571",
+      "query": "What is Tier 2 (Secondary Focus)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 320,
+      "correct": false
+    },
+    {
+      "queryId": "q_275",
+      "query": "6. Payment Options",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 316,
+      "correct": false
+    },
+    {
+      "queryId": "q_517",
+      "query": "What is Origin Story?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 348,
+      "correct": false
+    },
+    {
+      "queryId": "q_720",
+      "query": "- \"We build together\" — positioning vs vendor-client",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 337,
+      "correct": false
+    },
+    {
+      "queryId": "q_844",
+      "query": "What is Long-term Fundraising Path?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 321,
+      "correct": false
+    },
+    {
+      "queryId": "q_960",
+      "query": "What is Auto-Population Rules?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 315,
+      "correct": false
+    },
+    {
+      "queryId": "q_771",
+      "query": "Footer (standard)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 342,
+      "correct": false
+    },
+    {
+      "queryId": "q_727",
+      "query": "\"We already have an AI team\"",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 306,
+      "correct": false
+    },
+    {
+      "queryId": "q_139",
+      "query": "OpenClaw Production Deployment",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 302,
+      "correct": false
+    },
+    {
+      "queryId": "q_314",
+      "query": "Core Stack",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 397,
+      "correct": false
+    },
+    {
+      "queryId": "q_348",
+      "query": "- **Reads from:** Context Vault (research, past content performance)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 294,
+      "correct": false
+    },
+    {
+      "queryId": "q_397",
+      "query": "**See `04_zoo_icd_neop",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 297,
+      "correct": false
+    },
+    {
+      "queryId": "q_823",
+      "query": "Key learnings from previous work and pivot",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 301,
+      "correct": false
+    },
+    {
+      "queryId": "q_797",
+      "query": "- Amazon-style 6-pager narrative document",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 289,
+      "correct": false
+    },
+    {
+      "queryId": "q_729",
+      "query": "What is \"Our industry is different\"?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 314,
+      "correct": false
+    },
+    {
+      "queryId": "q_368",
+      "query": "Client Engagement Lifecycle",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 354,
+      "correct": false
+    },
+    {
+      "queryId": "q_1005",
+      "query": "What is GCP / Gemini Issues (Top of Mind)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 311,
+      "correct": false
+    },
+    {
+      "queryId": "q_748",
+      "query": "Alternative Palette (used in some decks)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": -1252,
+      "correct": false
+    },
+    {
+      "queryId": "q_202",
+      "query": "Trigger Model",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 337,
+      "correct": false
+    },
+    {
+      "queryId": "q_39",
+      "query": "Axe / Axe Cortex (Content Engine)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 348,
+      "correct": false
+    },
+    {
+      "queryId": "q_979",
+      "query": "- **OpenClaw** — Agent runtime (unforked)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 344,
+      "correct": false
+    },
+    {
+      "queryId": "q_130",
+      "query": "TeamPulse",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 305,
+      "correct": false
+    },
+    {
+      "queryId": "q_429",
+      "query": "1. Main Pitch Deck (HTML, 105 slides)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 353,
+      "correct": false
+    },
+    {
+      "queryId": "q_811",
+      "query": "03 — Goals",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 320,
+      "correct": false
+    },
+    {
+      "queryId": "q_814",
+      "query": "Core thesis and company values (abundance through AI, etc",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 319,
+      "correct": false
+    },
+    {
+      "queryId": "q_120",
+      "query": "What is Axe Content Engine?",
+      "R@5": 0,
+      "nDCG@10": 0.3333333333333333,
+      "mrr": 0.14285714285714285,
+      "latencyMs": 4392,
+      "topResult": "jd708g5mnfxkvh8p5dv7cncz4n854te2",
+      "correct": false
+    },
+    {
+      "queryId": "q_739",
+      "query": "Close Sequence",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 3151,
+      "topResult": "jd7edzgzk0hagxhtkf0wmtrzdd855ct7",
+      "correct": false
+    },
+    {
+      "queryId": "q_309",
+      "query": "What Axe Is",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 2638,
+      "topResult": "jd7bvaf3bhsbt07bbv3w22f8a9854tx7",
+      "correct": true
+    },
+    {
+      "queryId": "q_497",
+      "query": "The Priya Multiplier",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 849,
+      "topResult": "jd70zt47zct3en5kj62c7ve46s854bc8",
+      "correct": false
+    },
+    {
+      "queryId": "q_37",
+      "query": "- Built on OpenClaw for yoga studio leads (US/GB markets)",
+      "R@5": 1,
+      "nDCG@10": 0.5,
+      "mrr": 0.3333333333333333,
+      "latencyMs": 927,
+      "topResult": "jd7d5a8fwbam62n7se1tqdkf2n855tv1",
+      "correct": false
+    },
+    {
+      "queryId": "q_901",
+      "query": "5 Custom Agents (v1 design)",
+      "R@5": 1,
+      "nDCG@10": 0.38685280723454163,
+      "mrr": 0.2,
+      "latencyMs": 1070,
+      "topResult": "jd7cxysfkd9tjg4q106k5fbdx9854h2w",
+      "correct": false
+    },
+    {
+      "queryId": "q_815",
+      "query": "What is 05 — Business Model?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 1037,
+      "topResult": "jd71k615gv812b8yv87ajbgaad8549sw",
+      "correct": false
+    },
+    {
+      "queryId": "q_272",
+      "query": "What is 5. Order Management?",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 1170,
+      "topResult": "jd7dstbnrqdcbr0r29vs41f0zd85452j",
+      "correct": true
+    },
+    {
+      "queryId": "q_500",
+      "query": "Why ICD First",
+      "R@5": 0,
+      "nDCG@10": 0.3010299956639812,
+      "mrr": 0.1111111111111111,
+      "latencyMs": 890,
+      "topResult": "jd76whseqeyza9y2kshdpt1gps855sf7",
+      "correct": false
+    },
+    {
+      "queryId": "q_261",
+      "query": "What is 1. Product Discovery?",
+      "R@5": 1,
+      "nDCG@10": 0.38685280723454163,
+      "mrr": 0.2,
+      "latencyMs": 885,
+      "topResult": "jd765y8z9a0164ym07wcyzsczn854cbg",
+      "correct": false
+    },
+    {
+      "queryId": "q_799",
+      "query": "Document Title",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 1234,
+      "topResult": "jd79x2w213kyj934wjg1zj7m0x855x69",
+      "correct": false
+    },
+    {
+      "queryId": "q_985",
+      "query": "- **Supabase** — Some Emma components",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 1091,
+      "topResult": "jd756dmsx5g360n1yzc1kk8n4n855cvb",
+      "correct": true
+    },
+    {
+      "queryId": "q_740",
+      "query": "Once prospect is HOT:",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 1055,
+      "topResult": "jd7ewyqmq8pghgkz63m4kk35j5854cmp",
+      "correct": true
+    },
+    {
+      "queryId": "q_837",
+      "query": "Additional Clients (compact one-liners)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 779,
+      "topResult": "jd79x2w213kyj934wjg1zj7m0x855x69",
+      "correct": false
+    },
+    {
+      "queryId": "q_764",
+      "query": "- Pure HTML + CSS + minimal JS",
+      "R@5": 1,
+      "nDCG@10": 1,
+      "mrr": 1,
+      "latencyMs": 1185,
+      "topResult": "jd7egdqp603tf6ckwqh8zdxx6h8557vx",
+      "correct": true
+    },
+    {
+      "queryId": "q_298",
+      "query": "Deployment Status",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 922,
+      "topResult": "jd74sbajmm4jebh7vpqjvd0ced855s26",
+      "correct": false
+    },
+    {
+      "queryId": "q_666",
+      "query": "Demo Playbook",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 816,
+      "topResult": "jd79x2w213kyj934wjg1zj7m0x855x69",
+      "correct": false
+    },
+    {
+      "queryId": "q_416",
+      "query": "What is Page 2: The Marketplace?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 3241,
+      "topResult": "jd782v30hze8ztrxmjt4yf52e5855j7j",
+      "correct": false
+    },
+    {
+      "queryId": "q_929",
+      "query": "What We Took from MemPalace",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 61,
+      "correct": false
+    },
+    {
+      "queryId": "q_107",
+      "query": "- Health check script (healthcheck",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": -649,
+      "correct": false
+    },
+    {
+      "queryId": "q_958",
+      "query": "Cross-Wing Connections (Corridors)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 338,
+      "correct": false
+    },
+    {
+      "queryId": "q_320",
+      "query": "- Which posts drove engagement",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 330,
+      "correct": false
+    },
+    {
+      "queryId": "q_509",
+      "query": "Status",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 328,
+      "correct": false
+    },
+    {
+      "queryId": "q_872",
+      "query": "Automation Plan",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 343,
+      "correct": false
+    },
+    {
+      "queryId": "q_589",
+      "query": "35 ICP documents total, each covering either:",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 298,
+      "correct": false
+    },
+    {
+      "queryId": "q_527",
+      "query": "> \"The single-person billion-dollar company is no longer a thought experiment — it's an architectural inevitability",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 311,
+      "correct": false
+    },
+    {
+      "queryId": "q_921",
+      "query": "What is Reading (Retrieval)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 307,
+      "correct": false
+    },
+    {
+      "queryId": "q_41",
+      "query": "What is Emma (Customer Connect / WhatsApp Shopping)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 347,
+      "correct": false
+    },
+    {
+      "queryId": "q_939",
+      "query": "🤝 Clients (one sub-wing per client)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 340,
+      "correct": false
+    },
+    {
+      "queryId": "q_593",
+      "query": "What is 2. Professional Services (Legal, CA, Consulting)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 321,
+      "correct": false
+    },
+    {
+      "queryId": "q_629",
+      "query": "- <50% knowledge workers",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 303,
+      "correct": false
+    },
+    {
+      "queryId": "q_270",
+      "query": "4. Personalized Experience",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 548,
+      "correct": false
+    },
+    {
+      "queryId": "q_90",
+      "query": "- **Binding:** loopback (127",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 331,
+      "correct": false
+    },
+    {
+      "queryId": "q_579",
+      "query": "Geography",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 330,
+      "correct": false
+    },
+    {
+      "queryId": "q_601",
+      "query": "- Student-facing platforms",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 328,
+      "correct": false
+    },
+    {
+      "queryId": "q_580",
+      "query": "- India-first (primary)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 371,
+      "correct": false
+    },
+    {
+      "queryId": "q_558",
+      "query": "3. AI Training",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 359,
+      "correct": false
+    },
+    {
+      "queryId": "q_301",
+      "query": "D2C brands / small-to-mid retailers who:",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 327,
+      "correct": false
+    },
+    {
+      "queryId": "q_996",
+      "query": "Planned upgrade over flat vector search for Context Vault:",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 339,
+      "correct": false
+    },
+    {
+      "queryId": "q_851",
+      "query": "1. NDA (Non-Disclosure Agreement)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 329,
+      "correct": false
+    },
+    {
+      "queryId": "q_187",
+      "query": "- **Role:** Employee payslip generation in",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 356,
+      "correct": false
+    },
+    {
+      "queryId": "q_578",
+      "query": "What is Geography?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 345,
+      "correct": false
+    },
+    {
+      "queryId": "q_643",
+      "query": "- **Content & Brand:** ₹6L — fuels Axe content engine",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 335,
+      "correct": false
+    },
+    {
+      "queryId": "q_565",
+      "query": "What is ICP (Ideal Customer Profile)?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 348,
+      "correct": false
+    },
+    {
+      "queryId": "q_937",
+      "query": "- **Decisions Hall:** Stack Choices, Architecture, Pricing, NEop Design",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 326,
+      "correct": false
+    },
+    {
+      "queryId": "q_422",
+      "query": "Memory Palace — Zoo Media Sub-Wing (from CORTEX-PALACE)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 558,
+      "correct": false
+    },
+    {
+      "queryId": "q_555",
+      "query": "2. AI Digital Employee Implementation (Build & Deploy)",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 334,
+      "correct": false
+    },
+    {
+      "queryId": "q_871",
+      "query": "What is Automation Plan?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 358,
+      "correct": false
+    },
+    {
+      "queryId": "q_760",
+      "query": "Zoo Media Deck Frameworks",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 317,
+      "correct": false
+    },
+    {
+      "queryId": "q_182",
+      "query": "What is Brand System?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 316,
+      "correct": false
+    },
+    {
+      "queryId": "q_738",
+      "query": "What is Close Sequence?",
+      "R@5": 0,
+      "nDCG@10": 0,
+      "mrr": 0,
+      "latencyMs": 327,
+      "correct": false
+    }
+  ]
+}
