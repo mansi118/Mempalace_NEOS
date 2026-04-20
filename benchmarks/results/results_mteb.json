@@ -1,0 +1,18 @@
+{
+  "model": "qwen3-embedding-8b",
+  "dimensions": 4096,
+  "timestamp": "2026-04-20T10:34:05Z",
+  "sts": {
+    "spearman": 0.863,
+    "p_value": 0.0,
+    "n_pairs": 20
+  },
+  "retrieval": {
+    "R@1": 1.0,
+    "R@5": 1.0,
+    "MRR@10": 1.0,
+    "n_queries": 20,
+    "corpus_size": 20
+  },
+  "duration_s": 14.3
+}
