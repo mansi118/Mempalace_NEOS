@@ -1,97 +1,62 @@
-interface Props {
-  stats: any;
-}
+interface Props { stats: any; }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  fact: "bg-accent-blue",
-  decision: "bg-accent-purple",
-  conversation: "bg-brand",
-  task: "bg-accent-amber",
-  lesson: "bg-accent-green",
-  preference: "bg-pink-500",
-  procedure: "bg-cyan-500",
-  signal: "bg-accent-red",
-  identity: "bg-white",
+const CAT_COLORS: Record<string, string> = {
+  fact: "#4A9EFF", decision: "#A855F7", conversation: "#00D4AA",
+  task: "#F59E0B", lesson: "#10B981", preference: "#EC4899",
+  procedure: "#22D3EE", signal: "#FF4136", identity: "#fff",
 };
 
 export default function StatsPanel({ stats }: Props) {
-  const categories = stats.closets?.byCategory ?? {};
-  const total = stats.closets?.visible ?? 1;
+  const cats = stats.closets?.byCategory ?? {};
+  const total = stats.closets?.visible || 1;
+  const pipeline = [
+    { label: "Quarantine", val: stats.closets?.needsReview ?? 0, warn: true },
+    { label: "Decayed", val: stats.closets?.decayed ?? 0 },
+    { label: "Retracted", val: stats.closets?.retracted ?? 0, bad: true },
+    { label: "Total stored", val: stats.closets?.total ?? 0, bold: true },
+  ];
 
   return (
-    <section className="mb-16 animate-fade-in" style={{ animationDelay: "0.5s" }}>
-      <h2 className="text-xl font-bold mb-6">Memory Distribution</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Category breakdown */}
-        <div className="bg-bg-card rounded-[20px] border border-border p-6">
-          <h3 className="text-sm font-semibold text-text-secondary mb-4 uppercase tracking-wider">
-            By Category
-          </h3>
-          {Object.keys(categories).length === 0 ? (
-            <p className="text-text-tertiary text-sm">No memories yet. Ingest data to see distribution.</p>
+    <section className="anim-in" style={{ marginBottom: 48, animationDelay: "0.5s" }}>
+      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Memory Distribution</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
+        {/* Categories */}
+        <div style={{ background: "#111", borderRadius: 16, border: "1px solid #222", padding: 24 }}>
+          <h3 style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>By Category</h3>
+          {Object.keys(cats).length === 0 ? (
+            <p style={{ color: "#666", fontSize: 13 }}>No memories yet.</p>
           ) : (
-            <div className="space-y-3">
-              {Object.entries(categories)
-                .sort(([, a], [, b]) => (b as number) - (a as number))
-                .map(([cat, count]) => (
-                  <div key={cat}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="capitalize">{cat}</span>
-                      <span className="text-text-secondary">{count as number}</span>
-                    </div>
-                    <div className="h-1.5 bg-bg-elevated rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${CATEGORY_COLORS[cat] ?? "bg-text-tertiary"}`}
-                        style={{ width: `${Math.max(2, ((count as number) / total) * 100)}%` }}
-                      />
-                    </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {Object.entries(cats).sort(([,a],[,b]) => (b as number) - (a as number)).map(([cat, count]) => (
+                <div key={cat}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                    <span style={{ textTransform: "capitalize" }}>{cat}</span>
+                    <span style={{ color: "#888" }}>{count as number}</span>
                   </div>
-                ))}
+                  <div style={{ height: 5, background: "#1C1C1C", borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{
+                      height: "100%", borderRadius: 3,
+                      background: CAT_COLORS[cat] ?? "#666",
+                      width: `${Math.max(3, ((count as number) / total) * 100)}%`,
+                    }}/>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Pipeline health */}
-        <div className="bg-bg-card rounded-[20px] border border-border p-6">
-          <h3 className="text-sm font-semibold text-text-secondary mb-4 uppercase tracking-wider">
-            Pipeline Status
-          </h3>
-          <div className="space-y-4">
-            {[
-              {
-                label: "Quarantine",
-                value: stats.closets?.needsReview ?? 0,
-                color: stats.closets?.needsReview > 0 ? "text-accent-amber" : "text-accent-green",
-                icon: stats.closets?.needsReview > 0 ? "!" : "ok",
-              },
-              {
-                label: "Decayed",
-                value: stats.closets?.decayed ?? 0,
-                color: "text-text-secondary",
-                icon: "-",
-              },
-              {
-                label: "Retracted",
-                value: stats.closets?.retracted ?? 0,
-                color: stats.closets?.retracted > 0 ? "text-accent-red" : "text-text-secondary",
-                icon: "x",
-              },
-              {
-                label: "Total stored",
-                value: stats.closets?.total ?? 0,
-                color: "text-white",
-                icon: "#",
-              },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-6 h-6 rounded-md bg-bg-elevated flex items-center justify-center text-xs font-mono ${item.color}`}>
-                    {item.icon}
-                  </div>
-                  <span className="text-sm">{item.label}</span>
-                </div>
-                <span className={`text-sm font-mono ${item.color}`}>{item.value}</span>
+        {/* Pipeline */}
+        <div style={{ background: "#111", borderRadius: 16, border: "1px solid #222", padding: 24 }}>
+          <h3 style={{ fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>Pipeline Status</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {pipeline.map(item => (
+              <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13 }}>{item.label}</span>
+                <span style={{
+                  fontSize: 13, fontFamily: "monospace",
+                  color: item.val > 0 && item.bad ? "#FF4136" : item.val > 0 && item.warn ? "#F59E0B" : item.bold ? "#fff" : "#888",
+                }}>{item.val}</span>
               </div>
             ))}
           </div>

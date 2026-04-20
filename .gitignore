@@ -15,3 +15,8 @@ dist/
 build/
 coverage/
 .vitest-cache/
+conversations.json
+*.json.bak
+projects.json
+users.json
+memories.json

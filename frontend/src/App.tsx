@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import SearchPalette from "./components/SearchPalette";
