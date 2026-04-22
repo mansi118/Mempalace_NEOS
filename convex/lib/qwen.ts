@@ -1,104 +1,105 @@
-// Qwen3-Embedding-8B via HuggingFace/Scaleway — single embedding provider.
+// Bedrock Titan Text Embeddings v2 — primary embedding provider.
 //
-// OpenAI-compatible API via HuggingFace router.
-// Replaces Voyage and Gemini embeddings.
+// File name kept as "qwen.ts" to avoid import churn across the codebase.
+// The concrete backend is AWS Bedrock's Titan v2 model (ap-south-1),
+// invoked via Bedrock's bearer-token auth (no SigV4 needed).
 //
-// Endpoint: https://router.huggingface.co/scaleway/v1/embeddings
-// Model: qwen3-embedding-8b (provider ID, not HF model ID)
-// Dimensions: 4096
-// Auth: Bearer HF_TOKEN
+// Model:    amazon.titan-embed-text-v2:0
+// Dims:     1024 (configurable: 256 / 512 / 1024)
+// Context:  8K tokens per input
+// Batch:    1 text per call — parallelized at the caller side
+//
+// Prior providers tried: Qwen3-8B via HF/Scaleway (credits depleted),
+// Voyage direct (no API key provided), Gemini (billing not active).
+// Bedrock's bearer-token mode is the unblocked path.
 
-export const EMBEDDING_MODEL = "qwen3-embedding-8b";
-export const EMBEDDING_DIMENSIONS = 4096;
+const BEDROCK_REGION = "ap-south-1";
+const BEDROCK_MODEL_ID = "amazon.titan-embed-text-v2:0";
+
+export const EMBEDDING_MODEL = BEDROCK_MODEL_ID;
+export const EMBEDDING_DIMENSIONS = 1024;
 export const EMBEDDING_API_URL =
-  "https://router.huggingface.co/scaleway/v1/embeddings";
+  `https://bedrock-runtime.${BEDROCK_REGION}.amazonaws.com/model/${encodeURIComponent(BEDROCK_MODEL_ID)}/invoke`;
 
-// Qwen3-Embedding-8B supports up to 32K tokens. Be conservative.
-const MAX_CONTENT_CHARS = 120_000;
+// Titan v2 accepts up to 8192 tokens (~32K chars). Keep a safe margin.
+const MAX_CONTENT_CHARS = 30_000;
+
+export type EmbedInputType = "query" | "document";
 
 export function truncateForEmbedding(text: string): string {
   if (text.length <= MAX_CONTENT_CHARS) return text;
   return text.slice(0, MAX_CONTENT_CHARS);
 }
 
-/**
- * Embed a single text.
- */
-export async function embedOne(text: string): Promise<number[]> {
-  const { embeddings } = await callQwenEmbedding([text]);
-  return embeddings[0]!;
+export async function embedOne(
+  text: string,
+  _inputType: EmbedInputType = "document",
+): Promise<number[]> {
+  return callBedrock(text);
 }
 
-/**
- * Batch embed multiple texts. The API handles batching natively.
- */
 export async function embedBatchTexts(
   texts: string[],
+  _inputType: EmbedInputType = "document",
 ): Promise<{ embeddings: number[][]; count: number }> {
   if (texts.length === 0) return { embeddings: [], count: 0 };
 
-  // Scaleway/HF handles batches natively. Chunk at 64 to be safe.
-  const CHUNK_SIZE = 64;
-  const allEmbeddings: number[][] = [];
+  // Titan v2 is single-input per call. Parallelize in chunks to avoid
+  // per-region rate limits.
+  const CONCURRENCY = 8;
+  const results: number[][] = new Array(texts.length);
 
-  for (let i = 0; i < texts.length; i += CHUNK_SIZE) {
-    const chunk = texts.slice(i, i + CHUNK_SIZE);
-    const { embeddings } = await callQwenEmbedding(chunk);
-    allEmbeddings.push(...embeddings);
+  for (let i = 0; i < texts.length; i += CONCURRENCY) {
+    const batch = texts.slice(i, i + CONCURRENCY);
+    const vecs = await Promise.all(batch.map((t) => callBedrock(t)));
+    for (let j = 0; j < batch.length; j++) {
+      results[i + j] = vecs[j]!;
+    }
   }
 
-  return { embeddings: allEmbeddings, count: allEmbeddings.length };
+  return { embeddings: results, count: results.length };
 }
 
-/**
- * Call the Qwen embedding API (OpenAI-compatible format).
- */
-async function callQwenEmbedding(
-  texts: string[],
-): Promise<{ embeddings: number[][] }> {
-  const token = process.env.HF_TOKEN;
-  if (!token) {
-    throw new Error("HF_TOKEN not set in Convex environment");
-  }
+async function callBedrock(text: string): Promise<number[]> {
+  const token = process.env.AWS_BEARER_TOKEN_BEDROCK;
+  if (!token) throw new Error("AWS_BEARER_TOKEN_BEDROCK not set");
 
-  const truncated = texts.map(truncateForEmbedding);
+  const truncated = truncateForEmbedding(text);
+  if (!truncated.trim()) {
+    return new Array(EMBEDDING_DIMENSIONS).fill(0);
+  }
 
   const response = await fetch(EMBEDDING_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Accept: "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      model: EMBEDDING_MODEL,
-      input: truncated,
+      inputText: truncated,
+      dimensions: EMBEDDING_DIMENSIONS,
+      normalize: true,
     }),
   });
 
   if (!response.ok) {
     const body = await response.text();
     throw new Error(
-      `Qwen Embedding API error ${response.status}: ${body.slice(0, 300)}`,
+      `Bedrock Titan embed error ${response.status}: ${body.slice(0, 300)}`,
     );
   }
 
   const data = (await response.json()) as {
-    data: Array<{ embedding: number[]; index: number }>;
-    model: string;
+    embedding: number[];
+    inputTextTokenCount: number;
   };
 
-  // Sort by index (API may return out of order).
-  const sorted = data.data.sort((a, b) => a.index - b.index);
-  const embeddings = sorted.map((d) => d.embedding);
-
-  // Sanity check.
-  for (let i = 0; i < embeddings.length; i++) {
-    if (embeddings[i]!.length !== EMBEDDING_DIMENSIONS) {
-      throw new Error(
-        `Expected ${EMBEDDING_DIMENSIONS}-dim, got ${embeddings[i]!.length} at index ${i}`,
-      );
-    }
+  if (!data.embedding || data.embedding.length !== EMBEDDING_DIMENSIONS) {
+    throw new Error(
+      `Bedrock returned ${data.embedding?.length ?? 0}-dim, expected ${EMBEDDING_DIMENSIONS}`,
+    );
   }
 
-  return { embeddings };
+  return data.embedding;
 }

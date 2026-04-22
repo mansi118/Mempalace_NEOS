@@ -257,6 +257,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Direct FalkorDB Cypher writes — replaces Graphiti's LLM-dependent ingestion.
+# Entities are pre-extracted by Convex (Llama 4 Scout) and shipped here as
+# structured data for deterministic MERGE queries.
+from graph_writer import router as graph_router  # noqa: E402
+
+app.include_router(graph_router)
+
 
 # ── Auth middleware ───────────────────────────────────────────────
 

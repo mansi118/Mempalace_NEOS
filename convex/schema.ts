@@ -255,6 +255,11 @@ export default defineSchema({
 
     // Dedup
     dedupKey: v.string(),
+
+    // Entity extraction cache (Llama 4 Scout → FalkorDB direct writes)
+    entitiesExtracted: v.optional(v.boolean()),
+    entitiesCount: v.optional(v.number()),
+    relationsCount: v.optional(v.number()),
   })
     .index("by_room", ["roomId"])
     .index("by_palace", ["palaceId"])
@@ -313,7 +318,7 @@ export default defineSchema({
     .index("by_closet", ["closetId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
-      dimensions: 4096,
+      dimensions: 1024,
       filterFields: ["palaceId", "wingId"],
     }),
 

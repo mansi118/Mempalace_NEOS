@@ -68,6 +68,13 @@ export const getWingByName = query({
   },
 });
 
+export const getWing = query({
+  args: { wingId: v.id("wings") },
+  handler: async (ctx, { wingId }) => {
+    return await ctx.db.get(wingId);
+  },
+});
+
 // ─── HALLS ───────────────────────────────────────────────────
 
 export const listHalls = query({

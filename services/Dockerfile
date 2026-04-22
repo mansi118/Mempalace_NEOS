@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY config.py .
 COPY graphiti_bridge.py .
+COPY graph_writer.py .
 
 # Log directory (mountable volume in production).
 RUN mkdir -p /var/log/graphiti-bridge

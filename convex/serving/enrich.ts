@@ -4,6 +4,15 @@ import { internalQuery } from "../_generated/server.js";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel.js";
 
+// ─── Palace lookup for graph search ─────────────────────────────
+
+export const getPalaceForSearch = internalQuery({
+  args: { palaceId: v.id("palaces") },
+  handler: async (ctx, { palaceId }) => {
+    return await ctx.db.get(palaceId);
+  },
+});
+
 // ─── Resolve embedding doc IDs to closetIds ─────────────────────
 
 export const resolveEmbeddingIds = internalQuery({

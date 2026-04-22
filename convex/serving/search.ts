@@ -24,11 +24,17 @@ import { internal } from "../_generated/api.js";
 import { v } from "convex/values";
 import type { Id, Doc } from "../_generated/dataModel.js";
 import { embedOne } from "../lib/qwen.js";
+import { graphSearch, buildGraphBoostMap } from "../lib/graphClient.js";
 
 // Qwen3-Embedding-8B produces lower similarity scores than Voyage/Gemini.
 // Calibrated from real query tests: relevant results score 0.4-0.8.
 const DEFAULT_SIMILARITY_FLOOR = 0.35;
 const DEFAULT_LIMIT = 5;
+
+// Graph-boost tuning. Each matching entity in a closet adds this to its vector
+// score; capped at GRAPH_BOOST_MAX. Keeps vector dominant but re-ranks ties.
+const GRAPH_BOOST_PER_ENTITY = 0.05;
+const GRAPH_BOOST_MAX = 0.2;
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -90,9 +96,23 @@ export async function coreSearch(
     };
   }
 
-  // 1. Embed query (asymmetric — RETRIEVAL_QUERY).
-  //    Direct call to Gemini, not action-to-action.
-  const queryEmbedding = await embedOne(trimmed);
+  // 1. Embed query + graph search in parallel.
+  //    - Embed: asymmetric RETRIEVAL_QUERY, direct Gemini/Qwen call.
+  //    - Graph: CONTAINS lookup against entity names on the bridge.
+  //    Graph runs with its own 3s timeout and swallows errors, so a bridge
+  //    outage degrades to pure vector search (Tier 1 fallback).
+  const palaceDoc: Doc<"palaces"> | null = await ctx.runQuery(
+    internal.serving.enrich.getPalaceForSearch,
+    { palaceId: args.palaceId },
+  );
+  const clientId = palaceDoc?.clientId ?? "";
+
+  const [queryEmbedding, graphHits] = await Promise.all([
+    embedOne(trimmed),
+    clientId ? graphSearch(clientId, trimmed, 15) : Promise.resolve([]),
+  ]);
+
+  const graphBoostMap = buildGraphBoostMap(graphHits);
 
   // 2. Vector search — actions have ctx.vectorSearch.
   //    Returns { _id, _score } where _id is the closet_embeddings doc ID,
@@ -132,6 +152,11 @@ export async function coreSearch(
     closetIds.push(r.closetId as Id<"closets">);
     scoreMap.set(r.closetId, scoreByEmbId.get(r.embeddingId) ?? 0);
   }
+
+  // Note: graph results are only used to re-rank vector hits (step 5 boost).
+  // We deliberately do NOT inject graph-only closets here — the similarity
+  // floor is the guardrail that makes "I don't know" first-class, and
+  // CONTAINS-based entity search is too loose for short out-of-domain queries.
 
   if (closetIds.length === 0) {
     return {
@@ -174,7 +199,12 @@ export async function coreSearch(
     if (args.afterTs && closet.createdAt < args.afterTs) continue;
     if (args.beforeTs && closet.createdAt > args.beforeTs) continue;
 
-    const score = scoreMap.get(closet._id as string) ?? 0;
+    const vectorScore = scoreMap.get(closet._id as string) ?? 0;
+    const graphBoost = Math.min(
+      (graphBoostMap.get(closet._id as string) ?? 0) * GRAPH_BOOST_PER_ENTITY,
+      GRAPH_BOOST_MAX,
+    );
+    const score = vectorScore + graphBoost;
 
     // Similarity floor — "I don't know" is first-class (gap F4).
     if (score < args.similarityFloor) continue;
@@ -193,9 +223,11 @@ export async function coreSearch(
       sourceAdapter: closet.sourceAdapter,
       confidence: closet.confidence,
     });
-
-    if (results.length >= args.limit) break;
   }
+
+  // Re-rank by (vector + graph-boost) score and trim to limit.
+  results.sort((a, b) => b.score - a.score);
+  results.splice(args.limit);
 
   // 6. Determine overall confidence.
   let confidence: "high" | "medium" | "low" = "low";

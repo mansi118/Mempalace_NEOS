@@ -20,6 +20,9 @@ const ALLOWED_CLOSET_PATCH_FIELDS = new Set([
   "embeddingStatus",
   "graphitiStatus",
   "updatedAt",
+  "entitiesExtracted",
+  "entitiesCount",
+  "relationsCount",
 ]);
 
 const ALLOWED_DRAWER_PATCH_FIELDS = new Set([

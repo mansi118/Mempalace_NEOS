@@ -576,6 +576,23 @@ export const setGraphitiStatus = internalMutation({
   },
 });
 
+export const setEntityExtractionResult = internalMutation({
+  args: {
+    closetId: v.id("closets"),
+    extracted: v.boolean(),
+    entitiesCount: v.number(),
+    relationsCount: v.number(),
+  },
+  handler: async (ctx, { closetId, extracted, entitiesCount, relationsCount }) => {
+    await safePatchCloset(ctx, closetId, {
+      entitiesExtracted: extracted,
+      entitiesCount,
+      relationsCount,
+      graphitiStatus: (extracted ? "ingested" : "failed") as Doc<"closets">["graphitiStatus"],
+    });
+  },
+});
+
 // ─────────────────────────────────────────────────────────────────
 // DRAWERS
 // ─────────────────────────────────────────────────────────────────
@@ -784,8 +801,8 @@ export const storeEmbedding = mutation({
   handler: async (ctx, args) => {
     // Dimension check — MUST match schema.ts vectorIndex dimensions AND lib/qwen.ts EMBEDDING_DIMENSIONS.
     // If you change the embedding model, update all three locations.
-    // Qwen3-Embedding-8B via HuggingFace/Scaleway: 4096 dims.
-    const EXPECTED_DIMS = 4096;
+    // Bedrock Titan Text Embeddings v2: 1024 dims.
+    const EXPECTED_DIMS = 1024;
     if (args.embedding.length !== EXPECTED_DIMS) {
       throw new Error(
         `embedding must be ${EXPECTED_DIMS}-dim, got ${args.embedding.length}`,
@@ -832,6 +849,47 @@ export const storeEmbedding = mutation({
     });
 
     return embId;
+  },
+});
+
+export const purgeEmbeddingsBatch = internalMutation({
+  args: { palaceId: v.id("palaces"), limit: v.optional(v.number()) },
+  handler: async (ctx, { palaceId, limit }): Promise<{ deleted: number; more: boolean }> => {
+    // Paginated delete — reading full 4096-dim vectors in a single call
+    // blows past Convex's 16MB read cap. Caller loops until more=false.
+    const cap = limit ?? 25;
+    const embs = await ctx.db
+      .query("closet_embeddings")
+      .withIndex("by_closet")
+      .take(cap + 1);
+    const matching = embs.filter((e) => e.palaceId === palaceId).slice(0, cap);
+    for (const e of matching) {
+      await ctx.db.delete(e._id);
+    }
+    return { deleted: matching.length, more: embs.length > cap };
+  },
+});
+
+export const resetEmbeddingStatusBatch = internalMutation({
+  args: { palaceId: v.id("palaces"), cursor: v.optional(v.string()) },
+  handler: async (
+    ctx,
+    { palaceId, cursor },
+  ): Promise<{ reset: number; nextCursor: string | null; done: boolean }> => {
+    const page = await ctx.db
+      .query("closets")
+      .withIndex("by_palace", (q) => q.eq("palaceId", palaceId))
+      .paginate({ numItems: 50, cursor: cursor ?? null });
+    for (const c of page.page) {
+      if (c.embeddingStatus !== "pending") {
+        await safePatchCloset(ctx, c._id, { embeddingStatus: "pending" });
+      }
+    }
+    return {
+      reset: page.page.length,
+      nextCursor: page.continueCursor,
+      done: page.isDone,
+    };
   },
 });
 
