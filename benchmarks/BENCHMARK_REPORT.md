@@ -2,12 +2,12 @@
 
 **System:** PALACE Context Vault v1.0
 **Corpus:** 424 closets, 694 facts, 4096-dim Qwen3-Embedding-8B
-**Date:** April 20, 2026
+**Date:** April 20, 2026ultr
 **All results reproducible from this repo.**
 
 ---
 
-## 1. Embedding Quality — MTEB Comparison
+## 1. Eoksy mbedding Quality — MTEB Comparison
 
 **Benchmark:** MTEB (Massive Text Embedding Benchmark)
 **Standard:** huggingface.co/spaces/mteb/leaderboard
