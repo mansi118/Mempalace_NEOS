@@ -1,0 +1,164 @@
+{
+  "timestamp": "2026-04-22T05:08:56.154Z",
+  "totalPass": 26,
+  "totalFail": 0,
+  "checks": [
+    {
+      "page": "/",
+      "name": "listPalaces",
+      "pass": true,
+      "ms": 1316
+    },
+    {
+      "page": "/",
+      "name": "getStats",
+      "pass": true,
+      "ms": 221
+    },
+    {
+      "page": "/",
+      "name": "listWings",
+      "pass": true,
+      "ms": 232
+    },
+    {
+      "page": "/",
+      "name": "listAllTunnels",
+      "pass": true,
+      "ms": 324
+    },
+    {
+      "page": "/",
+      "name": "searchLatencyStats",
+      "pass": true,
+      "ms": 335
+    },
+    {
+      "page": "/",
+      "name": "errorRate",
+      "pass": true,
+      "ms": 267
+    },
+    {
+      "page": "/",
+      "name": "pipelineHealth",
+      "pass": true,
+      "ms": 219
+    },
+    {
+      "page": "/",
+      "name": "listRoomsByWing",
+      "pass": true,
+      "ms": 223
+    },
+    {
+      "page": "/room/:id",
+      "name": "getRoomDeep",
+      "pass": true,
+      "ms": 225
+    },
+    {
+      "page": "search",
+      "name": "searchPalace (in-domain)",
+      "pass": true,
+      "ms": 1900
+    },
+    {
+      "page": "search",
+      "name": "searchPalace (off-domain)",
+      "pass": true,
+      "ms": 1801
+    },
+    {
+      "page": "search",
+      "name": "searchPalace (empty)",
+      "pass": true,
+      "ms": 253
+    },
+    {
+      "page": "search",
+      "name": "searchPalace (very long)",
+      "pass": true,
+      "ms": 688
+    },
+    {
+      "page": "/entities",
+      "name": "graphStats",
+      "pass": true,
+      "ms": 469
+    },
+    {
+      "page": "/entities",
+      "name": "graphSearch (broad)",
+      "pass": true,
+      "ms": 559
+    },
+    {
+      "page": "/entities",
+      "name": "graphSearch (specific)",
+      "pass": true,
+      "ms": 884
+    },
+    {
+      "page": "/entities",
+      "name": "graphTraverse",
+      "pass": true,
+      "ms": 466
+    },
+    {
+      "page": "/queries",
+      "name": "recentQueries",
+      "pass": true,
+      "ms": 308
+    },
+    {
+      "page": "/queries",
+      "name": "queryLogStats",
+      "pass": true,
+      "ms": 241
+    },
+    {
+      "page": "/admin",
+      "name": "listQuarantined",
+      "pass": true,
+      "ms": 294
+    },
+    {
+      "page": "/admin",
+      "name": "listNeops",
+      "pass": true,
+      "ms": 233
+    },
+    {
+      "page": "/admin",
+      "name": "recentAuditEvents",
+      "pass": true,
+      "ms": 235
+    },
+    {
+      "page": "/admin",
+      "name": "ingestionActivity",
+      "pass": true,
+      "ms": 226
+    },
+    {
+      "page": "http",
+      "name": "POST /mcp palace_search",
+      "pass": true,
+      "ms": 0
+    },
+    {
+      "page": "bridge",
+      "name": "GET /health",
+      "pass": true,
+      "ms": 0
+    },
+    {
+      "page": "frontend",
+      "name": "GET /",
+      "pass": true,
+      "ms": 0,
+      "detail": "status=401"
+    }
+  ]
+}

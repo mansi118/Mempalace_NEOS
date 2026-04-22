@@ -24,7 +24,7 @@ import { convexTest } from "convex-test";
 import { api } from "../convex/_generated/api.js";
 import schema from "../convex/schema.js";
 
-const EMBED_DIM = 4096; // Qwen3-Embedding-8B
+const EMBED_DIM = 1024; // Bedrock Titan Text Embeddings v2
 const fakeEmbedding = (): number[] => Array.from({ length: EMBED_DIM }, () => Math.random());
 
 // Helper: create a fully-scaffolded palace with a single wing/hall/room.
