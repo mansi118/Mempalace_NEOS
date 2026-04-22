@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-22T05:08:56.154Z",
+  "timestamp": "2026-04-22T07:02:40.007Z",
   "totalPass": 26,
   "totalFail": 0,
   "checks": [
@@ -7,139 +7,139 @@
       "page": "/",
       "name": "listPalaces",
       "pass": true,
-      "ms": 1316
+      "ms": 697
     },
     {
       "page": "/",
       "name": "getStats",
       "pass": true,
-      "ms": 221
+      "ms": 339
     },
     {
       "page": "/",
       "name": "listWings",
       "pass": true,
-      "ms": 232
+      "ms": 312
     },
     {
       "page": "/",
       "name": "listAllTunnels",
       "pass": true,
-      "ms": 324
+      "ms": 230
     },
     {
       "page": "/",
       "name": "searchLatencyStats",
       "pass": true,
-      "ms": 335
+      "ms": 291
     },
     {
       "page": "/",
       "name": "errorRate",
       "pass": true,
-      "ms": 267
+      "ms": 289
     },
     {
       "page": "/",
       "name": "pipelineHealth",
       "pass": true,
-      "ms": 219
+      "ms": 296
     },
     {
       "page": "/",
       "name": "listRoomsByWing",
       "pass": true,
-      "ms": 223
+      "ms": 298
     },
     {
       "page": "/room/:id",
       "name": "getRoomDeep",
       "pass": true,
-      "ms": 225
+      "ms": 308
     },
     {
       "page": "search",
       "name": "searchPalace (in-domain)",
       "pass": true,
-      "ms": 1900
+      "ms": 986
     },
     {
       "page": "search",
       "name": "searchPalace (off-domain)",
       "pass": true,
-      "ms": 1801
+      "ms": 1763
     },
     {
       "page": "search",
       "name": "searchPalace (empty)",
       "pass": true,
-      "ms": 253
+      "ms": 246
     },
     {
       "page": "search",
       "name": "searchPalace (very long)",
       "pass": true,
-      "ms": 688
+      "ms": 689
     },
     {
       "page": "/entities",
       "name": "graphStats",
       "pass": true,
-      "ms": 469
+      "ms": 707
     },
     {
       "page": "/entities",
       "name": "graphSearch (broad)",
       "pass": true,
-      "ms": 559
+      "ms": 472
     },
     {
       "page": "/entities",
       "name": "graphSearch (specific)",
       "pass": true,
-      "ms": 884
+      "ms": 542
     },
     {
       "page": "/entities",
       "name": "graphTraverse",
       "pass": true,
-      "ms": 466
+      "ms": 471
     },
     {
       "page": "/queries",
       "name": "recentQueries",
       "pass": true,
-      "ms": 308
+      "ms": 242
     },
     {
       "page": "/queries",
       "name": "queryLogStats",
       "pass": true,
-      "ms": 241
+      "ms": 309
     },
     {
       "page": "/admin",
       "name": "listQuarantined",
       "pass": true,
-      "ms": 294
+      "ms": 326
     },
     {
       "page": "/admin",
       "name": "listNeops",
       "pass": true,
-      "ms": 233
+      "ms": 226
     },
     {
       "page": "/admin",
       "name": "recentAuditEvents",
       "pass": true,
-      "ms": 235
+      "ms": 246
     },
     {
       "page": "/admin",
       "name": "ingestionActivity",
       "pass": true,
-      "ms": 226
+      "ms": 237
     },
     {
       "page": "http",

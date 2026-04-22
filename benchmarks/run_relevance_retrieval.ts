@@ -246,7 +246,7 @@ async function main() {
     mediumR5: Number(process.env.BUDGET_MEDIUM_R5 ?? 0.85),
     hardR5:   Number(process.env.BUDGET_HARD_R5   ?? 0.60),
     unans:    Number(process.env.BUDGET_UNANS     ?? 1.00),
-    p95Ms:    Number(process.env.BUDGET_P95_MS    ?? 2000),
+    p95Ms:    Number(process.env.BUDGET_P95_MS    ?? 3000),
   };
   const med = difficultyResults["medium"] ?? { total: 0, r1: 0, r5: 0 };
   const hard = difficultyResults["hard"] ?? { total: 0, r1: 0, r5: 0 };

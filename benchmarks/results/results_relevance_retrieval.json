@@ -1,7 +1,7 @@
 {
   "name": "PALACE Relevance Retrieval",
-  "timestamp": "2026-04-22T05:10:42.554Z",
-  "corpusSize": 433,
+  "timestamp": "2026-04-22T07:04:03.217Z",
+  "corpusSize": 446,
   "queryCount": 35,
   "metrics": {
     "R@1": 0.0223,
@@ -10,9 +10,9 @@
     "MRR@10": 0.8065,
     "nDCG@10": 0.4201,
     "P@5": 0.4686,
-    "avgLatencyMs": 946,
-    "medianLatencyMs": 800,
-    "p95LatencyMs": 1768
+    "avgLatencyMs": 1049,
+    "medianLatencyMs": 776,
+    "p95LatencyMs": 1713
   },
   "perQuery": [
     {
@@ -21,7 +21,7 @@
       "R@5": 0.07407407407407407,
       "nDCG@10": 0.3589542101716347,
       "mrr": 1,
-      "latencyMs": 1768,
+      "latencyMs": 1713,
       "topResult": "jd7amjpexjqre1ay789g3ft51d8549vr",
       "correct": true
     },
@@ -31,7 +31,7 @@
       "R@5": 0.07407407407407407,
       "nDCG@10": 0.31488013066763093,
       "mrr": 1,
-      "latencyMs": 1136,
+      "latencyMs": 698,
       "topResult": "jd78990fayqytymb0bpcv26r05855kqp",
       "correct": true
     },
@@ -41,7 +41,7 @@
       "R@5": 0.037037037037037035,
       "nDCG@10": 0.22009176629808017,
       "mrr": 1,
-      "latencyMs": 743,
+      "latencyMs": 741,
       "topResult": "jd7839mxzj169djpk6s513ms39854496",
       "correct": true
     },
@@ -51,7 +51,7 @@
       "R@5": 0.07407407407407407,
       "nDCG@10": 0.39375843764607193,
       "mrr": 1,
-      "latencyMs": 1721,
+      "latencyMs": 1571,
       "topResult": "jd7bdzkew6jd8dcfrn3tcfqznd854q1y",
       "correct": true
     },
@@ -61,7 +61,7 @@
       "R@5": 0.057692307692307696,
       "nDCG@10": 0.4789015552876929,
       "mrr": 1,
-      "latencyMs": 838,
+      "latencyMs": 683,
       "topResult": "jd7dc6vzc6e94mw8mh8yjf469s854jz1",
       "correct": true
     },
@@ -71,7 +71,7 @@
       "R@5": 0,
       "nDCG@10": 0.07336392209936005,
       "mrr": 0.14285714285714285,
-      "latencyMs": 808,
+      "latencyMs": 1544,
       "topResult": "jd7amjpexjqre1ay789g3ft51d8549vr",
       "correct": false
     },
@@ -81,7 +81,7 @@
       "R@5": 0.03529411764705882,
       "nDCG@10": 0.46392645631755636,
       "mrr": 0.5,
-      "latencyMs": 756,
+      "latencyMs": 776,
       "topResult": "jd712a7as5gw3h00ezbfjwfa1n8540ya",
       "correct": false
     },
@@ -91,7 +91,7 @@
       "R@5": 0.4,
       "nDCG@10": 0.5541432109622958,
       "mrr": 1,
-      "latencyMs": 837,
+      "latencyMs": 733,
       "topResult": "jd7161da9d12zp4ght506jtpyh8546cw",
       "correct": true
     },
@@ -101,7 +101,7 @@
       "R@5": 0.06060606060606061,
       "nDCG@10": 0.38113435412202,
       "mrr": 1,
-      "latencyMs": 759,
+      "latencyMs": 821,
       "topResult": "jd73gb5vxnbqgdase2w6cr5mwx854xcd",
       "correct": true
     },
@@ -111,7 +111,7 @@
       "R@5": 0.3076923076923077,
       "nDCG@10": 0.6051399156371955,
       "mrr": 1,
-      "latencyMs": 740,
+      "latencyMs": 649,
       "topResult": "jd7d4hgn3w88nae8h75wq6yjx9854m2x",
       "correct": true
     },
@@ -121,7 +121,7 @@
       "R@5": 0.06382978723404255,
       "nDCG@10": 0.6136525857537393,
       "mrr": 1,
-      "latencyMs": 1913,
+      "latencyMs": 697,
       "topResult": "jd764r4560j08r62p8rym6w3wd8554qs",
       "correct": true
     },
@@ -131,7 +131,7 @@
       "R@5": 0.0379746835443038,
       "nDCG@10": 0.5933607200949346,
       "mrr": 1,
-      "latencyMs": 845,
+      "latencyMs": 1630,
       "topResult": "jd75xsmsgczhnbww98hrjyvp5x8557c0",
       "correct": true
     },
@@ -141,7 +141,7 @@
       "R@5": 0.05405405405405406,
       "nDCG@10": 0.3589542101716347,
       "mrr": 1,
-      "latencyMs": 1572,
+      "latencyMs": 1533,
       "topResult": "jd73zp3np0y0s57bxcqrgtzm65855e0e",
       "correct": true
     },
@@ -151,7 +151,7 @@
       "R@5": 0,
       "nDCG@10": 0.07839826897867533,
       "mrr": 0.16666666666666666,
-      "latencyMs": 759,
+      "latencyMs": 125,
       "topResult": "jd7f5np2nn0j5vs3xx4hwj2smx855kc4",
       "correct": false
     },
@@ -161,7 +161,7 @@
       "R@5": 0.09090909090909091,
       "nDCG@10": 0.3565964385966262,
       "mrr": 0.3333333333333333,
-      "latencyMs": 746,
+      "latencyMs": 717,
       "topResult": "jd70ap6k48nw71bmhzg4cfshzx855r0n",
       "correct": false
     },
@@ -171,7 +171,7 @@
       "R@5": 0.3076923076923077,
       "nDCG@10": 0.6371523797895856,
       "mrr": 1,
-      "latencyMs": 1574,
+      "latencyMs": 1498,
       "topResult": "jd78560f7ee3q9288624etgm49854nhe",
       "correct": true
     },
@@ -181,7 +181,7 @@
       "R@5": 0.05128205128205128,
       "nDCG@10": 0.3785988060390612,
       "mrr": 1,
-      "latencyMs": 728,
+      "latencyMs": 736,
       "topResult": "jd79bv2j301pr8h7170c2cseb5854tms",
       "correct": true
     },
@@ -191,7 +191,7 @@
       "R@5": 0.08571428571428572,
       "nDCG@10": 0.6180396628416763,
       "mrr": 1,
-      "latencyMs": 783,
+      "latencyMs": 1557,
       "topResult": "jd76wr4c4byyyn917gnfv48rt1854fcd",
       "correct": true
     },
@@ -201,7 +201,7 @@
       "R@5": 0.034482758620689655,
       "nDCG@10": 0.33087444618182743,
       "mrr": 0.3333333333333333,
-      "latencyMs": 800,
+      "latencyMs": 1713,
       "topResult": "jd7eg4p06vqht107h5jswj50s1855hgv",
       "correct": false
     },
@@ -211,7 +211,7 @@
       "R@5": 0.030303030303030304,
       "nDCG@10": 0.13886244387355454,
       "mrr": 0.5,
-      "latencyMs": 1594,
+      "latencyMs": 617,
       "topResult": "jd7b1e5qzm136r8kqfd37yswk9855rbw",
       "correct": false
     },
@@ -221,7 +221,7 @@
       "R@5": 0.04132231404958678,
       "nDCG@10": 0.800693766409882,
       "mrr": 1,
-      "latencyMs": 756,
+      "latencyMs": 652,
       "topResult": "jd7fym3g4652af8v2jm2xwfvkd855pr5",
       "correct": true
     },
@@ -231,7 +231,7 @@
       "R@5": 0.03409090909090909,
       "nDCG@10": 0.6429424283490954,
       "mrr": 1,
-      "latencyMs": 740,
+      "latencyMs": 612,
       "topResult": "jd72nha1t06ypn2r0smr4sdey585473k",
       "correct": true
     },
@@ -241,7 +241,7 @@
       "R@5": 0.08108108108108109,
       "nDCG@10": 0.4440973278132557,
       "mrr": 1,
-      "latencyMs": 723,
+      "latencyMs": 707,
       "topResult": "jd705b769x4djcz53s3ba3wzrs854b1g",
       "correct": true
     },
@@ -251,7 +251,7 @@
       "R@5": 0.045454545454545456,
       "nDCG@10": 0.40030566811860463,
       "mrr": 0.5,
-      "latencyMs": 815,
+      "latencyMs": 1698,
       "topResult": "jd79frw3czygc4d4j4t6q46jd58556qd",
       "correct": false
     },
@@ -261,7 +261,7 @@
       "R@5": 0.03296703296703297,
       "nDCG@10": 0.6212166613240646,
       "mrr": 1,
-      "latencyMs": 844,
+      "latencyMs": 1568,
       "topResult": "jd7c90n6yw1ntr39vq3ab40zzd8550fm",
       "correct": true
     },
@@ -271,7 +271,7 @@
       "R@5": 0.07407407407407407,
       "nDCG@10": 0.31488013066763093,
       "mrr": 1,
-      "latencyMs": 816,
+      "latencyMs": 663,
       "topResult": "jd7amjpexjqre1ay789g3ft51d8549vr",
       "correct": true
     },
@@ -281,7 +281,7 @@
       "R@5": 0.02247191011235955,
       "nDCG@10": 0.4818998405251556,
       "mrr": 1,
-      "latencyMs": 786,
+      "latencyMs": 1536,
       "topResult": "jd7161da9d12zp4ght506jtpyh8546cw",
       "correct": true
     },
@@ -291,7 +291,7 @@
       "R@5": 0.06521739130434782,
       "nDCG@10": 0.6168295842361274,
       "mrr": 1,
-      "latencyMs": 739,
+      "latencyMs": 1578,
       "topResult": "jd7d4hgn3w88nae8h75wq6yjx9854m2x",
       "correct": true
     },
@@ -301,7 +301,7 @@
       "R@5": 0.02702702702702703,
       "nDCG@10": 0.22009176629808017,
       "mrr": 1,
-      "latencyMs": 722,
+      "latencyMs": 826,
       "topResult": "jd77q4qz62aympwxs5zzmzra258544n6",
       "correct": true
     },
@@ -311,7 +311,7 @@
       "R@5": 0.037037037037037035,
       "nDCG@10": 0.2863459897524692,
       "mrr": 1,
-      "latencyMs": 743,
+      "latencyMs": 636,
       "topResult": "jd7cgdbjh5av5wxejdprtmmzjn854dhp",
       "correct": true
     },
@@ -321,7 +321,7 @@
       "R@5": 0.024390243902439025,
       "nDCG@10": 0.23440650992329987,
       "mrr": 0.25,
-      "latencyMs": 822,
+      "latencyMs": 663,
       "topResult": "jd77zcwf51b0s0s46wz6h5gqys855xdh",
       "correct": false
     },
@@ -331,7 +331,7 @@
       "R@5": 0.03409090909090909,
       "nDCG@10": 0.5278432933752526,
       "mrr": 0.5,
-      "latencyMs": 695,
+      "latencyMs": 1728,
       "topResult": "jd7asbmpcpz4knm11fz9p4sjbn854z6q",
       "correct": false
     },
@@ -341,7 +341,7 @@
       "R@5": 0.08571428571428572,
       "nDCG@10": 0.3340514446642156,
       "mrr": 0.5,
-      "latencyMs": 815,
+      "latencyMs": 792,
       "topResult": "jd7161da9d12zp4ght506jtpyh8546cw",
       "correct": false
     },
@@ -351,7 +351,7 @@
       "R@5": 0.02127659574468085,
       "nDCG@10": 0.2934556883974402,
       "mrr": 1,
-      "latencyMs": 778,
+      "latencyMs": 1658,
       "topResult": "jd79myks07mbcv6bb5f2qwmsps8542cg",
       "correct": true
     },
@@ -361,7 +361,7 @@
       "R@5": 0.05555555555555555,
       "nDCG@10": 0.5341769051617135,
       "mrr": 0.5,
-      "latencyMs": 909,
+      "latencyMs": 646,
       "topResult": "jd75dxa1t4dzr2p0xqd931rfkn854k0j",
       "correct": false
     }

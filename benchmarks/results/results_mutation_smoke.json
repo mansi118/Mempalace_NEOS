@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-04-22T06:49:12.504Z",
-  "pass": 14,
-  "fail": 1,
+  "timestamp": "2026-04-22T07:02:47.827Z",
+  "pass": 16,
+  "fail": 0,
   "checks": [
     {
       "name": "createCloset returned closetId",
       "pass": true,
-      "ms": 254
+      "ms": 253
     },
     {
       "name": "createCloset status = created",
@@ -16,7 +16,7 @@
     {
       "name": "readback returns closet",
       "pass": true,
-      "ms": 230
+      "ms": 303
     },
     {
       "name": "content round-trips",
@@ -46,7 +46,7 @@
     {
       "name": "retractCloset returned ok",
       "pass": true,
-      "ms": 359
+      "ms": 263
     },
     {
       "name": "closet still exists (not hard-deleted)",
@@ -74,10 +74,14 @@
       "ms": 0
     },
     {
+      "name": "retracted closet not in search results",
+      "pass": true,
+      "ms": 0
+    },
+    {
       "name": "search-action call succeeded",
-      "pass": false,
-      "ms": 0,
-      "detail": "embedding provider likely down: [Request ID: a238fcf2b6b94d45] Server Error\nUncaught Error: Bedrock Titan embed error 403: {\"Message"
+      "pass": true,
+      "ms": 0
     }
   ]
 }

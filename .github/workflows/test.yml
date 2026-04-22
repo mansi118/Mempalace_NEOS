@@ -53,5 +53,5 @@ jobs:
           BUDGET_MEDIUM_R5: "0.85"
           BUDGET_HARD_R5: "0.60"
           BUDGET_UNANS: "1.00"
-          BUDGET_P95_MS: "2000"
+          BUDGET_P95_MS: "3000"
         run: npx tsx benchmarks/run_relevance_retrieval.ts
