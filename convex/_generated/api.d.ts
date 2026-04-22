@@ -25,6 +25,7 @@ import type * as lib_entityExtractor from "../lib/entityExtractor.js";
 import type * as lib_enums from "../lib/enums.js";
 import type * as lib_geminiLlm from "../lib/geminiLlm.js";
 import type * as lib_graphClient from "../lib/graphClient.js";
+import type * as lib_queryExpander from "../lib/queryExpander.js";
 import type * as lib_qwen from "../lib/qwen.js";
 import type * as lib_safePatch from "../lib/safePatch.js";
 import type * as lib_validators from "../lib/validators.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   "lib/enums": typeof lib_enums;
   "lib/geminiLlm": typeof lib_geminiLlm;
   "lib/graphClient": typeof lib_graphClient;
+  "lib/queryExpander": typeof lib_queryExpander;
   "lib/qwen": typeof lib_qwen;
   "lib/safePatch": typeof lib_safePatch;
   "lib/validators": typeof lib_validators;

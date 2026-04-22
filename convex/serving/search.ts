@@ -135,11 +135,12 @@ export async function coreSearch(
     };
   }
 
-  // 1. Embed query + graph search in parallel.
-  //    - Embed: asymmetric RETRIEVAL_QUERY, direct Gemini/Qwen call.
-  //    - Graph: CONTAINS lookup against entity names on the bridge.
-  //    Graph runs with its own 3s timeout and swallows errors, so a bridge
-  //    outage degrades to pure vector search (Tier 1 fallback).
+  // 1. Look up palace, then embed + graph-search in parallel.
+  //
+  // (Query expansion via Groq was prototyped in lib/queryExpander.ts but
+  // measured a regression on this corpus — the Tier 1 score was already
+  // at 100% R@5 hard and expansion added noise. Keep the module for
+  // future use on sparser palaces where base retrieval actually misses.)
   const palaceDoc: Doc<"palaces"> | null = await ctx.runQuery(
     internal.serving.enrich.getPalaceForSearch,
     { palaceId: args.palaceId },

@@ -10,10 +10,22 @@ import MonitoringPanel from "./components/MonitoringPanel";
 import TunnelMap from "./components/TunnelMap";
 import RoomView from "./components/RoomView";
 import Footer from "./components/Footer";
+import TestPlayground from "./components/TestPlayground";
+
+function useHashRoute(): string {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", onChange);
+    return () => window.removeEventListener("hashchange", onChange);
+  }, []);
+  return hash;
+}
 
 export default function App() {
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const route = useHashRoute();
 
   const palaces = useQuery(api.palace.queries.listPalaces, { onlyReady: true });
   const palace = palaces?.[0];
@@ -40,6 +52,16 @@ export default function App() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+
+  if (route === "#/test" && palaceId) {
+    return (
+      <div className="min-h-screen bg-bg-primary">
+        <Navbar onSearchClick={() => setSearchOpen(true)} palaceName={palace?.name} />
+        <TestPlayground palaceId={palaceId as string} />
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg-primary">
