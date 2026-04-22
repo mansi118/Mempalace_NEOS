@@ -11,7 +11,8 @@
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api.js";
 
-const CONCURRENCY = 2;  // gentle on HF rate limits
+const CONCURRENCY = 1;  // Groq free tier: 30 req/min on Llama 3.3 70B
+const REQUEST_INTERVAL_MS = 2100;  // ~28 req/min, under the cap
 const force = process.argv.includes("--force");
 
 const url = process.env.CONVEX_URL;
@@ -61,18 +62,17 @@ async function main() {
 
       console.log(`\n[${wing.name}/${room.name}] ${pending.length} closets`);
 
-      // Process in parallel batches of CONCURRENCY.
-      for (let i = 0; i < pending.length; i += CONCURRENCY) {
-        const batch = pending.slice(i, i + CONCURRENCY);
-        const results = await Promise.all(
-          batch.map((c: any) => processOne(c._id, c.title ?? c.content.slice(0, 50))),
-        );
-        for (const r of results) {
-          total++;
-          if (r === "ok") ok++;
-          else if (r === "skip") skip++;
-          else err++;
-        }
+      // Throttled serial processing — Groq free tier caps at 30 req/min.
+      for (const c of pending as any[]) {
+        const start = Date.now();
+        const r = await processOne(c._id, c.title ?? c.content.slice(0, 50));
+        total++;
+        if (r === "ok") ok++;
+        else if (r === "skip") skip++;
+        else err++;
+        const elapsed = Date.now() - start;
+        const sleep = Math.max(0, REQUEST_INTERVAL_MS - elapsed);
+        if (sleep > 0) await new Promise((r) => setTimeout(r, sleep));
       }
     }
   }
