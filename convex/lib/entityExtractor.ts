@@ -4,7 +4,10 @@
 // Groq's OpenAI-compatible API. Free tier: ~30 req/min on 70B model.
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile";
+// Llama 3.1 8B on Groq: 30 req/min, 30K tokens/min, ~5x 70B's TPM cap.
+// Quality for structured entity extraction is comparable — we're not asking
+// for reasoning, just JSON-structured named entity identification.
+const MODEL = "llama-3.1-8b-instant";
 
 export interface ExtractedEntity {
   name: string;
