@@ -252,6 +252,107 @@ export const listTunnelsTo = query({
   },
 });
 
+export const recentQueries = query({
+  args: { palaceId: v.id("palaces"), limit: v.optional(v.number()) },
+  handler: async (ctx, { palaceId, limit }) => {
+    const cap = Math.min(limit ?? 30, 100);
+    return await ctx.db
+      .query("query_log")
+      .withIndex("by_palace_time", (q) => q.eq("palaceId", palaceId))
+      .order("desc")
+      .take(cap);
+  },
+});
+
+export const queryLogStats = query({
+  args: { palaceId: v.id("palaces"), limit: v.optional(v.number()) },
+  handler: async (ctx, { palaceId, limit }) => {
+    // Last-N window — aggregate enough to chart without full-table scan.
+    const window = await ctx.db
+      .query("query_log")
+      .withIndex("by_palace_time", (q) => q.eq("palaceId", palaceId))
+      .order("desc")
+      .take(Math.min(limit ?? 500, 1000));
+
+    if (window.length === 0) {
+      return {
+        total: 0,
+        byConfidence: { high: 0, medium: 0, low: 0 },
+        zeroResultCount: 0,
+        avgLatency: 0,
+        p95Latency: 0,
+        topQueries: [] as Array<{ query: string; count: number }>,
+      };
+    }
+
+    const byConfidence = { high: 0, medium: 0, low: 0 };
+    let zeroResultCount = 0;
+    const freq = new Map<string, number>();
+    const latencies: number[] = [];
+
+    for (const q of window) {
+      if (q.confidence === "high") byConfidence.high++;
+      else if (q.confidence === "medium") byConfidence.medium++;
+      else byConfidence.low++;
+      if (q.resultCount === 0) zeroResultCount++;
+      freq.set(q.query, (freq.get(q.query) ?? 0) + 1);
+      latencies.push(q.latencyMs);
+    }
+
+    latencies.sort((a, b) => a - b);
+    const avgLatency = Math.round(latencies.reduce((s, v) => s + v, 0) / latencies.length);
+    const p95Latency = latencies[Math.floor(latencies.length * 0.95)] ?? 0;
+
+    const topQueries = Array.from(freq.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([query, count]) => ({ query, count }));
+
+    return {
+      total: window.length,
+      byConfidence,
+      zeroResultCount,
+      avgLatency,
+      p95Latency,
+      topQueries,
+    };
+  },
+});
+
+export const listAllTunnels = query({
+  args: { palaceId: v.id("palaces") },
+  handler: async (ctx, { palaceId }) => {
+    const tunnels = await ctx.db
+      .query("tunnels")
+      .withIndex("by_palace", (q) => q.eq("palaceId", palaceId))
+      .collect();
+
+    // Enrich with wing/room names so the frontend doesn't need N+1 lookups.
+    const result = await Promise.all(
+      tunnels.map(async (t) => {
+        const [fromRoom, toRoom] = await Promise.all([
+          ctx.db.get(t.fromRoomId),
+          ctx.db.get(t.toRoomId),
+        ]);
+        const [fromWing, toWing] = await Promise.all([
+          fromRoom ? ctx.db.get(fromRoom.wingId) : null,
+          toRoom ? ctx.db.get(toRoom.wingId) : null,
+        ]);
+        return {
+          _id: t._id,
+          relationship: t.relationship,
+          strength: t.strength,
+          from: fromRoom ? { roomId: fromRoom._id, roomName: fromRoom.name, wingName: fromWing?.name ?? "" } : null,
+          to: toRoom ? { roomId: toRoom._id, roomName: toRoom.name, wingName: toWing?.name ?? "" } : null,
+        };
+      }),
+    );
+    return result
+      .filter((t) => t.from && t.to)
+      .sort((a, b) => b.strength - a.strength);
+  },
+});
+
 // ─── PIPELINE STATUS (internal, used by embedding/graphiti backfill) ──
 
 export const closetsPendingEmbedding = internalQuery({

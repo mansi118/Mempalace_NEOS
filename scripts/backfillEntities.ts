@@ -12,7 +12,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api.js";
 
 const CONCURRENCY = 1;  // Groq free tier limits are per-account TPM+RPM.
-const REQUEST_INTERVAL_MS = 2200;  // ~27 req/min — under 30 RPM cap
+const REQUEST_INTERVAL_MS = 7000;  // ~8 req/min — honours TPM cap too
 const force = process.argv.includes("--force");
 
 const url = process.env.CONVEX_URL;

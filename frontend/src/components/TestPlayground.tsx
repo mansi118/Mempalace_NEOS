@@ -31,7 +31,7 @@ const PRESET_QUERIES = [
   { label: "Off-domain", query: "Recipe for butter chicken" },
 ];
 
-export default function TestPlayground({ palaceId }: { palaceId: string }) {
+export default function TestPlayground({ palaceId, onBack }: { palaceId: string; onBack?: () => void }) {
   const [query, setQuery] = useState("");
   const [response, setResponse] = useState<SearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -65,10 +65,48 @@ export default function TestPlayground({ palaceId }: { palaceId: string }) {
         : "#ef4444";
 
   return (
-    <div style={{ maxWidth: 960, margin: "60px auto", padding: "0 24px", color: "#e5e7eb" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>PALACE Search Playground</h1>
-      <p style={{ color: "#9ca3af", marginBottom: 24 }}>
-        Probe retrieval quality live. Type a query or click a preset. Shows vector+graph+confidence+recency composite score.
+    <div style={{ maxWidth: 960, margin: "0 auto", padding: "24px 20px 48px", color: "#e5e7eb" }}>
+      {onBack && (
+        <button
+          onClick={onBack}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            color: "#B0B0B0",
+            fontSize: 13,
+            fontWeight: 500,
+            background: "#111",
+            border: "1px solid #222",
+            borderRadius: 8,
+            padding: "8px 14px",
+            cursor: "pointer",
+            marginBottom: 20,
+            transition: "background 0.15s, color 0.15s, border-color 0.15s",
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.background = "#1C1C1C";
+            e.currentTarget.style.color = "#fff";
+            e.currentTarget.style.borderColor = "#333";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.background = "#111";
+            e.currentTarget.style.color = "#B0B0B0";
+            e.currentTarget.style.borderColor = "#222";
+          }}
+        >
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
+      )}
+      <h1 style={{ fontSize: "clamp(22px, 3vw, 28px)", fontWeight: 700, marginBottom: 8 }}>
+        PALACE Search Playground
+      </h1>
+      <p style={{ color: "#9ca3af", marginBottom: 24, fontSize: 14, lineHeight: 1.55 }}>
+        Probe retrieval live. Type a query or click a preset. Scoring combines vector + graph-boost +
+        confidence + recency, then MMR-lite diversifies top-5.
       </p>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>

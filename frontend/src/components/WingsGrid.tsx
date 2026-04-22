@@ -19,10 +19,10 @@ export default function WingsGrid({ wings, palaceId, onRoomClick }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
-    <section style={{ marginBottom: 64 }}>
+    <section id="wings-grid" style={{ marginBottom: 64, scrollMarginTop: 80 }}>
       <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Wings</h2>
       <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>{wings.length} wings organizing your institutional memory</p>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(340px, 100%), 1fr))", gap: 12 }}>
         {wings.map((wing, i) => (
           <WingCard key={wing._id} wing={wing} index={i}
             expanded={expanded === wing._id}
