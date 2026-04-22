@@ -380,4 +380,28 @@ export default defineSchema({
     .index("by_palace_time", ["palaceId", "timestamp"])
     .index("by_palace_neop", ["palaceId", "neopId"])
     .index("by_palace_status", ["palaceId", "status"]),
+
+  // ── QUERY LOG (serves retrieval-quality analysis) ───────────────
+  //
+  // Every palace_search call appends a row here. Used by:
+  //   - /benchmarks dashboard (recent trend)
+  //   - dogfood analysis (queries with no hits, weak hits, reformulations)
+  //   - query cache lookups (by queryHash, same palace, same filters)
+  query_log: defineTable({
+    palaceId: v.id("palaces"),
+    neopId: v.optional(v.string()),
+    query: v.string(),                     // truncated to 300 chars
+    queryHash: v.string(),                 // hash of (query + palaceId + filters)
+    resultCount: v.number(),
+    topScore: v.number(),
+    confidence: v.string(),                // "high" | "medium" | "low"
+    latencyMs: v.number(),
+    mode: v.string(),                      // "live" | "test" | "benchmark"
+    wingFilter: v.optional(v.string()),
+    categoryFilter: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_palace_time", ["palaceId", "createdAt"])
+    .index("by_hash", ["queryHash"])
+    .index("by_palace_mode", ["palaceId", "mode"]),
 });

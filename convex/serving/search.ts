@@ -26,8 +26,11 @@ import type { Id, Doc } from "../_generated/dataModel.js";
 import { embedOne } from "../lib/qwen.js";
 import { graphSearch, buildGraphBoostMap } from "../lib/graphClient.js";
 
-// Qwen3-Embedding-8B produces lower similarity scores than Voyage/Gemini.
-// Calibrated from real query tests: relevant results score 0.4-0.8.
+// Bedrock Titan v2 score distribution (observed empirically, April 2026):
+//   relevant in-domain:     0.55 - 0.75
+//   weak in-domain:          0.45 - 0.55
+//   irrelevant/off-domain:   0.25 - 0.40
+// Floor 0.35 rejects most off-domain but keeps weak in-domain for NEops to reason about.
 const DEFAULT_SIMILARITY_FLOOR = 0.35;
 const DEFAULT_LIMIT = 5;
 
@@ -35,6 +38,30 @@ const DEFAULT_LIMIT = 5;
 // score; capped at GRAPH_BOOST_MAX. Keeps vector dominant but re-ranks ties.
 const GRAPH_BOOST_PER_ENTITY = 0.05;
 const GRAPH_BOOST_MAX = 0.2;
+
+// Previously-unused signals now folded into ranking (Tier 1 quick-wins):
+//   - closet.confidence: extraction-quality proxy (high when Gemini/Llama
+//     was confident). Slightly boosts well-extracted closets.
+//   - createdAt age: gentle recency decay, half-life 90 days. Lets fresh
+//     memories float up when two results tie on vector+graph.
+//   - same-room penalty: first result from a room pays nothing; subsequent
+//     results from the same room get docked. Cheap MMR-lite, prevents
+//     five near-duplicates dominating top-5.
+const CONFIDENCE_WEIGHT = 0.05;
+const RECENCY_WEIGHT = 0.05;
+const RECENCY_HALF_LIFE_DAYS = 90;
+const SAME_ROOM_PENALTY = 0.03;
+
+// Confidence thresholds recalibrated for Titan's compressed score range.
+// Previously 0.7/0.5 — tuned for Qwen3's wider distribution.
+const CONF_HIGH_THRESHOLD = 0.65;
+const CONF_MEDIUM_THRESHOLD = 0.50;
+
+function recencyFactor(createdAt: number): number {
+  const ageDays = (Date.now() - createdAt) / 86_400_000;
+  // Exponential decay: 1.0 at ingest, ~0.5 at half-life, ~0.25 at 2× half-life.
+  return Math.exp(-ageDays / RECENCY_HALF_LIFE_DAYS);
+}
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -76,6 +103,18 @@ export interface CoreSearchArgs {
   similarityFloor: number;
   afterTs?: number;
   beforeTs?: number;
+  neopId?: string;
+  mode?: string; // "live" (default) | "test" | "benchmark"
+}
+
+// djb2 hash — deterministic across runtimes, enough for cache keys.
+function hashQuery(query: string, palaceId: string, wing?: string, cat?: string): string {
+  const input = `${query}::${palaceId}::${wing ?? ""}::${cat ?? ""}`;
+  let h = 5381;
+  for (let i = 0; i < input.length; i++) {
+    h = ((h << 5) + h) ^ input.charCodeAt(i);
+  }
+  return (h >>> 0).toString(36);
 }
 
 export async function coreSearch(
@@ -204,10 +243,14 @@ export async function coreSearch(
       (graphBoostMap.get(closet._id as string) ?? 0) * GRAPH_BOOST_PER_ENTITY,
       GRAPH_BOOST_MAX,
     );
-    const score = vectorScore + graphBoost;
+    const confidenceBoost = closet.confidence * CONFIDENCE_WEIGHT;
+    const recencyBoost = recencyFactor(closet.createdAt) * RECENCY_WEIGHT;
+    const score = vectorScore + graphBoost + confidenceBoost + recencyBoost;
 
-    // Similarity floor — "I don't know" is first-class (gap F4).
-    if (score < args.similarityFloor) continue;
+    // Similarity floor test uses the raw vector+graph, NOT the bonuses.
+    // Otherwise a high-confidence/fresh closet could sneak past the floor
+    // on a query it has no real similarity to.
+    if (vectorScore + graphBoost < args.similarityFloor) continue;
 
     results.push({
       closetId: closet._id,
@@ -225,9 +268,29 @@ export async function coreSearch(
     });
   }
 
-  // Re-rank by (vector + graph-boost) score and trim to limit.
+  // Re-rank by final score.
   results.sort((a, b) => b.score - a.score);
-  results.splice(args.limit);
+
+  // MMR-lite: apply same-room penalty greedily so top-K spans rooms.
+  // Pass 1: pick top result; Pass N: any subsequent pick from a room
+  // we've already picked from pays SAME_ROOM_PENALTY per prior pick,
+  // then we re-sort the remaining pool.
+  const diversified: SearchResult[] = [];
+  const roomCount = new Map<string, number>();
+  const pool = [...results];
+  while (diversified.length < args.limit && pool.length > 0) {
+    // Apply current penalty snapshot + re-rank pool.
+    pool.sort((a, b) => {
+      const penA = (roomCount.get(a.roomId) ?? 0) * SAME_ROOM_PENALTY;
+      const penB = (roomCount.get(b.roomId) ?? 0) * SAME_ROOM_PENALTY;
+      return (b.score - penB) - (a.score - penA);
+    });
+    const pick = pool.shift()!;
+    diversified.push(pick);
+    roomCount.set(pick.roomId, (roomCount.get(pick.roomId) ?? 0) + 1);
+  }
+  results.length = 0;
+  results.push(...diversified);
 
   // 6. Determine overall confidence.
   let confidence: "high" | "medium" | "low" = "low";
@@ -236,7 +299,11 @@ export async function coreSearch(
   if (results.length > 0) {
     const topScore = results[0]!.score;
     confidence =
-      topScore >= 0.7 ? "high" : topScore >= 0.5 ? "medium" : "low";
+      topScore >= CONF_HIGH_THRESHOLD
+        ? "high"
+        : topScore >= CONF_MEDIUM_THRESHOLD
+          ? "medium"
+          : "low";
     reason = "ok";
   }
 
@@ -244,12 +311,33 @@ export async function coreSearch(
   const totalChars = results.reduce((sum, r) => sum + r.content.length, 0);
   const tokenEstimate = Math.ceil(totalChars / 4);
 
+  const queryTimeMs = Date.now() - t0;
+
+  // 8. Log query (best-effort; don't block on failure).
+  try {
+    await ctx.runMutation(internal.palace.mutations.logQuery, {
+      palaceId: args.palaceId,
+      neopId: args.neopId,
+      query: trimmed,
+      queryHash: hashQuery(trimmed, args.palaceId, args.wingFilter, args.categoryFilter),
+      resultCount: results.length,
+      topScore: results[0]?.score ?? 0,
+      confidence,
+      latencyMs: queryTimeMs,
+      mode: args.mode ?? "live",
+      wingFilter: args.wingFilter,
+      categoryFilter: args.categoryFilter,
+    });
+  } catch {
+    // Logging failure is never allowed to break a search.
+  }
+
   return {
     results,
     confidence,
     reason,
     tokenEstimate,
-    queryTimeMs: Date.now() - t0,
+    queryTimeMs,
   };
 }
 

@@ -870,6 +870,29 @@ export const purgeEmbeddingsBatch = internalMutation({
   },
 });
 
+export const logQuery = internalMutation({
+  args: {
+    palaceId: v.id("palaces"),
+    neopId: v.optional(v.string()),
+    query: v.string(),
+    queryHash: v.string(),
+    resultCount: v.number(),
+    topScore: v.number(),
+    confidence: v.string(),
+    latencyMs: v.number(),
+    mode: v.string(),
+    wingFilter: v.optional(v.string()),
+    categoryFilter: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("query_log", {
+      ...args,
+      query: args.query.slice(0, 300),
+      createdAt: Date.now(),
+    });
+  },
+});
+
 export const resetEmbeddingStatusBatch = internalMutation({
   args: { palaceId: v.id("palaces"), cursor: v.optional(v.string()) },
   handler: async (
