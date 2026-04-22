@@ -139,6 +139,12 @@ async function main() {
   };
   writeFileSync("benchmarks/results/results_acl.json", JSON.stringify(out, null, 2));
   console.log(`\nSaved to benchmarks/results/results_acl.json`);
+
+  // Regression budget: ACL must be 100%. Any failure is a security bug.
+  if (failed > 0) {
+    console.error("\nBUDGET FAIL — access control regression. Block the deploy.");
+    process.exit(2);
+  }
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

@@ -1,0 +1,115 @@
+name: Production Canary
+
+# Fires a single canonical search against the live deployment every 15 min.
+# If the search fails or returns no results, opens a GitHub issue tagged
+# "production-down" so someone notices before a user complains.
+#
+# Catches:
+#   - Bedrock credential expiry
+#   - Bridge unreachable
+#   - Convex deployment errors
+#   - Vercel frontend down (optional, via HEAD request)
+#
+# Budget: one canary query every 15 min = 96 searches/day. Cost ≈ $0.00002/day.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"  # every 15 minutes
+  workflow_dispatch: {}       # manual trigger
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Canary search
+        id: canary
+        continue-on-error: true
+        env:
+          SITE_URL: https://modest-camel-322.convex.site
+          PALACE_ID: ${{ vars.PALACE_ID }}
+          # Expected behaviour: "Zoo Media" is an in-corpus entity. A healthy
+          # prod deploy returns ≥1 hit with confidence "high" or "medium".
+          # If we get an error or low/0 results, something is broken.
+        run: |
+          set +e
+          response=$(curl -s --max-time 10 -X POST "$SITE_URL/mcp" \
+            -H "Content-Type: application/json" \
+            -d "{\"tool\":\"palace_search\",\"params\":{\"query\":\"Zoo Media\",\"palaceId\":\"$PALACE_ID\",\"limit\":3},\"neopId\":\"_admin\",\"palaceId\":\"$PALACE_ID\"}")
+          http_rc=$?
+          echo "response<<EOF" >> $GITHUB_OUTPUT
+          echo "$response" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [[ "$http_rc" != "0" ]]; then
+            echo "status=network_error" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          status=$(echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status','?'))" 2>/dev/null)
+          count=$(echo "$response" | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('data',{}).get('results',[])))" 2>/dev/null)
+          conf=$(echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin).get('data',{}).get('confidence',''))" 2>/dev/null)
+
+          echo "status=$status" >> $GITHUB_OUTPUT
+          echo "count=$count" >> $GITHUB_OUTPUT
+          echo "confidence=$conf" >> $GITHUB_OUTPUT
+
+          if [[ "$status" != "ok" || "$count" == "0" || "$conf" == "low" ]]; then
+            exit 1
+          fi
+
+      - name: Open issue on failure
+        if: steps.canary.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = `${{ steps.canary.outputs.status }}`;
+            const count = `${{ steps.canary.outputs.count }}`;
+            const conf = `${{ steps.canary.outputs.confidence }}`;
+            const resp = `${{ steps.canary.outputs.response }}`.slice(0, 800);
+
+            // Coalesce: if an open "production-down" issue exists, just comment.
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: "production-down",
+              state: "open",
+              per_page: 5,
+            });
+
+            const body = [
+              `Canary at ${new Date().toISOString()} failed.`,
+              ``,
+              `- status: \`${status}\``,
+              `- result count: \`${count}\``,
+              `- confidence: \`${conf}\``,
+              ``,
+              `Response (truncated):`,
+              `\`\`\``,
+              resp,
+              `\`\`\``,
+              ``,
+              `Runbook: see RUNBOOK.md §1 (canary failure).`,
+            ].join("\n");
+
+            if (issues.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[canary] production search failed — ${new Date().toISOString().slice(0, 16)}Z`,
+                body,
+                labels: ["production-down"],
+              });
+            }

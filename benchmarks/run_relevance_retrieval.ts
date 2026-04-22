@@ -236,6 +236,45 @@ async function main() {
   };
   writeFileSync("benchmarks/results/results_relevance_retrieval.json", JSON.stringify(fullResult, null, 2));
   console.log("\nSaved to benchmarks/results/results_relevance_retrieval.json");
+
+  // ─── Regression budgets ─────────────────────────────────────────
+  //
+  // Any floor breach prints a red BUDGET FAIL and exits non-zero so CI
+  // gates on quality. Set via env to allow progressive tightening without
+  // editing code — the defaults are intentionally conservative.
+  const budgets = {
+    mediumR5: Number(process.env.BUDGET_MEDIUM_R5 ?? 0.85),
+    hardR5:   Number(process.env.BUDGET_HARD_R5   ?? 0.60),
+    unans:    Number(process.env.BUDGET_UNANS     ?? 1.00),
+    p95Ms:    Number(process.env.BUDGET_P95_MS    ?? 2000),
+  };
+  const med = difficultyResults["medium"] ?? { total: 0, r1: 0, r5: 0 };
+  const hard = difficultyResults["hard"] ?? { total: 0, r1: 0, r5: 0 };
+  const mediumR5 = med.total ? med.r5 / med.total : 0;
+  const hardR5 = hard.total ? hard.r5 / hard.total : 0;
+  const unansRate = unanswerableTotal ? unanswerableCorrect / unanswerableTotal : 1;
+  const p95 = benchmark.metrics.p95LatencyMs;
+
+  console.log("\n─── Regression budgets ───");
+  const rows = [
+    { name: "medium R@5",    value: mediumR5, budget: budgets.mediumR5, fmt: (v: number) => `${(v * 100).toFixed(0)}%` },
+    { name: "hard R@5",      value: hardR5,   budget: budgets.hardR5,   fmt: (v: number) => `${(v * 100).toFixed(0)}%` },
+    { name: "unanswerable",  value: unansRate, budget: budgets.unans,    fmt: (v: number) => `${(v * 100).toFixed(0)}%` },
+    { name: "p95 latency",   value: p95,      budget: budgets.p95Ms,    fmt: (v: number) => `${v}ms`,  lowerIsBetter: true },
+  ];
+  let anyFail = false;
+  for (const r of rows) {
+    const fail = r.lowerIsBetter ? r.value > r.budget : r.value < r.budget;
+    const icon = fail ? "✗ FAIL" : "✓ ok  ";
+    const op = r.lowerIsBetter ? "<=" : ">=";
+    console.log(`  ${icon}  ${r.name.padEnd(16)} ${r.fmt(r.value).padStart(6)}  (budget ${op} ${r.fmt(r.budget)})`);
+    if (fail) anyFail = true;
+  }
+
+  if (anyFail) {
+    console.error("\nBUDGET FAIL — retrieval quality below threshold. See above.");
+    process.exit(2);
+  }
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

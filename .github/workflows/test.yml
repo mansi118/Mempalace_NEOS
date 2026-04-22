@@ -1,0 +1,57 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # Unit tests — fast, no network — always run.
+      - name: Unit tests (vitest)
+        run: npm test --silent
+
+      # Live-backend tests. Only run on push to main (not PR fork PRs) because
+      # they hit the real Convex dev deployment + EC2 bridge.
+      - name: E2E smoke (live)
+        if: github.event_name == 'push'
+        env:
+          CONVEX_URL: https://small-dogfish-433.convex.cloud
+          CONVEX_SITE_URL: https://small-dogfish-433.convex.site
+        run: npx tsx benchmarks/run_e2e_smoke.ts
+
+      - name: Mutation smoke (live)
+        if: github.event_name == 'push'
+        env:
+          CONVEX_URL: https://small-dogfish-433.convex.cloud
+        run: npx tsx benchmarks/run_mutation_smoke.ts
+
+      - name: ACL invariant (live)
+        if: github.event_name == 'push'
+        env:
+          CONVEX_SITE_URL: https://small-dogfish-433.convex.site
+        run: npx tsx benchmarks/run_acl_suite.ts
+
+      - name: Retrieval quality + budgets (live)
+        if: github.event_name == 'push'
+        env:
+          CONVEX_URL: https://small-dogfish-433.convex.cloud
+          CONVEX_SITE_URL: https://small-dogfish-433.convex.site
+          BUDGET_MEDIUM_R5: "0.85"
+          BUDGET_HARD_R5: "0.60"
+          BUDGET_UNANS: "1.00"
+          BUDGET_P95_MS: "2000"
+        run: npx tsx benchmarks/run_relevance_retrieval.ts
