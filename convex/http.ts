@@ -291,17 +291,21 @@ async function dispatch(
       });
 
     // ── TWIN (per-seat structured state; addressed, never searched) ──
+    // Scope: keyed by (palaceId, AUTHENTICATED neopId) only. `neopId` here is the resolved
+    // caller identity (http handler overwrites any params.neopId before dispatch), and perms
+    // were already gated (get→recall, put→remember). A caller can only reach its OWN twin —
+    // no params override, no cross-seat read/write. Same tenant+seat discipline as palace_search.
     case "palace_get_twin":
       return ctx.runQuery(api.palace.twins.getTwin, {
         palaceId,
-        neopId: (params.neopId as string) ?? neopId,
+        neopId,
       });
 
     case "palace_put_twin":
       // Blind upsert; broker owns versioning (no server-side version check here).
       return ctx.runMutation(api.palace.twins.putTwin, {
         palaceId,
-        neopId: (params.neopId as string) ?? neopId,
+        neopId,
         doc: params.doc as string,
         version: params.version as number,
         maturity: params.maturity as string,
