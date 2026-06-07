@@ -290,6 +290,23 @@ async function dispatch(
         relationshipFilter: params.relationshipFilter as string | undefined,
       });
 
+    // ── TWIN (per-seat structured state; addressed, never searched) ──
+    case "palace_get_twin":
+      return ctx.runQuery(api.palace.twins.getTwin, {
+        palaceId,
+        neopId: (params.neopId as string) ?? neopId,
+      });
+
+    case "palace_put_twin":
+      // Blind upsert; broker owns versioning (no server-side version check here).
+      return ctx.runMutation(api.palace.twins.putTwin, {
+        palaceId,
+        neopId: (params.neopId as string) ?? neopId,
+        doc: params.doc as string,
+        version: params.version as number,
+        maturity: params.maturity as string,
+      });
+
     // ── STORAGE ───────────────────────────────────────────
     case "palace_remember":
       return ctx.runAction(api.ingestion.ingest.ingestExchange, {

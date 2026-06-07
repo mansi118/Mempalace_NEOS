@@ -304,6 +304,26 @@ export default defineSchema({
     .index("by_palace_from", ["palaceId", "fromRoomId"])
     .index("by_palace_to", ["palaceId", "toRoomId"]),
 
+  // ── TWINS (per-seat structured state — ADDRESSED, never searched) ──
+  //
+  // A twin is one structured record per (palaceId, neopId). Unlike closets it is NOT embedded,
+  // NOT vector-indexed, and never surfaces in palace_search — it is fetched/written by address.
+  // `doc` is the serialized twin JSON; the NEOS broker (MemoryBroker.put_twin) is the SOLE owner
+  // of versioning + stale-base rejection (see MEMPALACE_TWIN_CONTRACT.md). putTwin here is a
+  // blind "latest wins" upsert with NO server-side version check — single owner, no double-gate.
+  // Safe under single-writer-per-twin (Twin Curator); concurrent writers would need a server-side
+  // conditional upsert (write iff stored version == base). version/maturity are denormalized for
+  // cheap reads/debugging only; `doc` is the source of truth.
+  twins: defineTable({
+    palaceId: v.id("palaces"),
+    neopId: v.string(),                    // = seat (the routed NEop)
+    doc: v.string(),                       // serialized twin JSON (broker owns the schema)
+    version: v.number(),                   // denormalized; broker is source of truth
+    maturity: v.string(),                  // denormalized: seed|growing|mature|drifted
+    updatedAt: v.number(),
+  })
+    .index("by_palace_neop", ["palaceId", "neopId"]),
+
   // ── VECTOR EMBEDDINGS (versioned by model) ───────────────────
 
   closet_embeddings: defineTable({
