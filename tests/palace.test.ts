@@ -480,3 +480,63 @@ describe("validators", () => {
     ).not.toThrow();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────
+// Gate B-2: owner-namespaced room resolution (seat-routed remember)
+//
+// palace_remember auto-routes through getOrCreateRoom. Seat isolation is achieved at
+// the ROUTING layer: rooms resolve/create within the caller's owner namespace, so a
+// seat's auto-routed memory can never collide into a company- or another-seat's room.
+// (The full remember action is network-bound; the isolation LOGIC is this pure mutation.)
+// ─────────────────────────────────────────────────────────────────
+
+describe("Gate B-2 — owner-namespaced room resolution", () => {
+  test("same room name under different owners → distinct, correctly-owned rooms", async () => {
+    const t = convexTest(schema);
+    const { palaceId } = await makePalace(t);
+
+    const a1 = await t.mutation(api.palace.mutations.getOrCreateRoom, {
+      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_a",
+    });
+    const b1 = await t.mutation(api.palace.mutations.getOrCreateRoom, {
+      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_b",
+    });
+    expect(a1).not.toEqual(b1);
+
+    const ra = await t.query(api.palace.queries.getRoom, { roomId: a1 });
+    const rb = await t.query(api.palace.queries.getRoom, { roomId: b1 });
+    expect(ra!.ownerNeopId).toBe("seat_a");
+    expect(rb!.ownerNeopId).toBe("seat_b");
+
+    // Idempotent WITHIN an owner namespace.
+    const a2 = await t.mutation(api.palace.mutations.getOrCreateRoom, {
+      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_a",
+    });
+    expect(a2).toEqual(a1);
+  });
+
+  test("a seat does NOT hijack a pre-existing company room of the same name", async () => {
+    const t = convexTest(schema);
+    const { palaceId } = await makePalace(t);
+
+    // Company namespace (admin / bulk-ingest path: no owner) — stable on repeat.
+    const company = await t.mutation(api.palace.mutations.getOrCreateRoom, {
+      palaceId, wingName: "platform", roomName: "shared-topic",
+    });
+    const companyAgain = await t.mutation(api.palace.mutations.getOrCreateRoom, {
+      palaceId, wingName: "platform", roomName: "shared-topic",
+    });
+    expect(companyAgain).toEqual(company);
+
+    // A scoped seat gets its OWN room, not the company one.
+    const seat = await t.mutation(api.palace.mutations.getOrCreateRoom, {
+      palaceId, wingName: "platform", roomName: "shared-topic", ownerNeopId: "seat_a",
+    });
+    expect(seat).not.toEqual(company);
+
+    const rc = await t.query(api.palace.queries.getRoom, { roomId: company });
+    const rs = await t.query(api.palace.queries.getRoom, { roomId: seat });
+    expect(rc!.ownerNeopId).toBeUndefined();   // company namespace preserved (migration-safe)
+    expect(rs!.ownerNeopId).toBe("seat_a");
+  });
+});

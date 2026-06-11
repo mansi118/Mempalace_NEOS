@@ -202,6 +202,10 @@ export default defineSchema({
     .index("by_palace_name", ["palaceId", "name"])
     .index("by_wing_name", ["wingId", "name"])
     .index("by_palace_owner", ["palaceId", "ownerNeopId"])
+    // Owner-namespaced room resolution (Gate B-2): the same display name can exist once
+    // per owner — a seat's "stack" is distinct from the company "stack" and from another
+    // seat's "stack". ownerNeopId=undefined keys the shared COMPANY namespace (legacy rooms).
+    .index("by_palace_owner_name", ["palaceId", "ownerNeopId", "name"])
     .searchIndex("search_rooms", {
       searchField: "name",
       filterFields: ["palaceId", "wingId"],

@@ -361,12 +361,12 @@ async function dispatch(
       });
 
     // ── STORAGE ───────────────────────────────────────────
-    // NOTE (Gate B-2, deferred): palace_remember routes through the TRUSTED
-    // ingestion pipeline (ingestExchange → getOrCreateRoom → createCloset), which
-    // bypasses the per-room write guards below by design. getOrCreateRoom resolves an
-    // existing room by (palaceId, name) IGNORING ownerNeopId, so seat-isolating
-    // remember requires owner-namespaced room resolution — a lookup-semantics fork
-    // tracked separately. Until then, remember is NOT seat-scoped.
+    // palace_remember routes through the TRUSTED ingestion pipeline (ingestExchange →
+    // getOrCreateRoom → createCloset), which bypasses the per-room write guards by design.
+    // Seat isolation is achieved at the ROUTING layer instead (Gate B-2): the caller's seat
+    // is passed as ownerNeopId, so getOrCreateRoom resolves/creates rooms in this seat's OWN
+    // owner-namespace — auto-routed memory can never land in a company- or another-seat's room.
+    // Admin remembers into shared company rooms (ownerNeopId=undefined).
     case "palace_remember":
       return ctx.runAction(api.ingestion.ingest.ingestExchange, {
         palaceId,
@@ -376,6 +376,7 @@ async function dispatch(
         conversationId: `mcp_${neopId}_${Date.now()}`,
         conversationTitle: (params.title as string) ?? "MCP memory",
         exchangeIndex: 0,
+        ownerNeopId: perms.isAdmin ? undefined : perms.effectiveNeopId,
       });
 
     case "palace_add_closet": {

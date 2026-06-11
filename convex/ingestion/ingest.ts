@@ -56,6 +56,10 @@ export const ingestExchange = action({
     conversationId: v.string(),
     conversationTitle: v.string(),
     exchangeIndex: v.number(),
+    // Seat-isolation (Gate B-2): when set, auto-routed rooms resolve/create in this seat's
+    // OWN namespace so remembered memory is private to it. Unset = shared COMPANY rooms
+    // (bulk archive/admin ingestion, unchanged).
+    ownerNeopId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<IngestResult> => {
     const t0 = Date.now();
@@ -126,6 +130,7 @@ export const ingestExchange = action({
             wingName: item.wing,
             roomName: item.room,
             summary: item.title,
+            ownerNeopId: args.ownerNeopId,   // seat-isolation: route to the caller's namespace
           },
         );
 
