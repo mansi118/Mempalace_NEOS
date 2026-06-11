@@ -373,3 +373,52 @@ export function filterRoomsByReadScope<T extends RoomScope>(
   if (perms.isAdmin) return rooms;
   return rooms.filter((r) => canReadRoom(perms, r));
 }
+
+// ─── Layer 1: SoT-side independent enforcement (defense in depth) ────────────
+//
+// The room-mutating Convex mutations enforce seat write-scope THEMSELVES when handed
+// a caller identity (`actorNeopId`), independent of the /mcp dispatch guards (Layer 3).
+// This holds the isolation invariant even if a write reaches a mutation WITHOUT going
+// through dispatch — the deepest independence proof — and contains bugs (a dispatch path
+// that forgets to guard).
+//
+// Semantics of `actorNeopId`:
+//   • undefined → TRUSTED internal caller (crons, ingestion pipeline, admin scripts):
+//       no check. Preserves the bare-mutation contract these paths rely on.
+//   • "_admin"  → bypass.
+//   • a seat    → must own the room to write; may read own + company rooms.
+//
+// HONEST-CALLER posture (same as the rest of Phase 1): `actorNeopId` is DECLARED by the
+// caller, not cryptographically authenticated. A malicious direct caller could omit it;
+// this layer defends against accidental cross-seat writes and dispatch-bypass bugs, NOT a
+// forged identity. Signed per-seat identity is deferred to the multi-tenant/adversarial phase.
+
+export function assertActorCanWriteRoom(
+  actorNeopId: string | undefined,
+  room: RoomScope,
+): void {
+  if (actorNeopId === undefined) return;       // trusted internal caller
+  if (actorNeopId === ADMIN_NEOP_ID) return;   // admin bypass
+  if (!(room.ownerNeopId && room.ownerNeopId === actorNeopId)) {
+    throw new AccessDenied(
+      actorNeopId,
+      `SoT write-scope: room owned by "${room.ownerNeopId ?? "(company)"}" is not seat "${actorNeopId}"'s room`,
+    );
+  }
+}
+
+export function assertActorCanReadRoom(
+  actorNeopId: string | undefined,
+  room: RoomScope,
+): void {
+  if (actorNeopId === undefined) return;
+  if (actorNeopId === ADMIN_NEOP_ID) return;
+  const own = !!room.ownerNeopId && room.ownerNeopId === actorNeopId;
+  const company = room.ownerNeopId === undefined || room.ownerNeopId === null;
+  if (!(own || company)) {
+    throw new AccessDenied(
+      actorNeopId,
+      `SoT read-scope: room owned by "${room.ownerNeopId}" is not readable by seat "${actorNeopId}"`,
+    );
+  }
+}

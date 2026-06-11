@@ -199,6 +199,9 @@ async function dispatch(
   const palaceId = params.palaceId as Id<"palaces">;
   const neopId = params.neopId as string;
   const perms = params._perms as ResolvedPermissions;
+  // L1 defense-in-depth: the caller seat threaded into room-mutating mutations so the
+  // SoT enforces seat-scope independently of these dispatch guards (admin → undefined = trusted).
+  const actorNeopId = perms.isAdmin ? undefined : perms.effectiveNeopId;
 
   switch (tool) {
     // ── RECALL ────────────────────────────────────────────
@@ -408,6 +411,7 @@ async function dispatch(
         authorId: neopId,
         confidence: (params.confidence as number) ?? 0.8,
         needsReview: params.needsReview as boolean | undefined,
+        actorNeopId,
       });
     }
 
@@ -422,6 +426,7 @@ async function dispatch(
         fact: params.fact as string,
         validFrom: Date.now(),
         confidence: (params.confidence as number) ?? 0.8,
+        actorNeopId,
       });
     }
 
@@ -449,6 +454,7 @@ async function dispatch(
         relationship: params.relationship as string,
         strength: (params.strength as number) ?? 0.5,
         label: params.label as string | undefined,
+        actorNeopId,
       });
     }
 
@@ -461,6 +467,7 @@ async function dispatch(
       return ctx.runMutation(api.palace.mutations.invalidateDrawer, {
         drawerId: params.drawerId as Id<"drawers">,
         supersededBy: params.supersededBy as Id<"drawers"> | undefined,
+        actorNeopId,
       });
     }
 
@@ -473,6 +480,7 @@ async function dispatch(
         closetId: params.closetId as Id<"closets">,
         reason: params.reason as string,
         retractedBy: neopId,
+        actorNeopId,
       });
     }
 
@@ -486,6 +494,7 @@ async function dispatch(
         palaceId,
         sourceRoomId: params.sourceRoomId as Id<"rooms">,
         targetRoomId: params.targetRoomId as Id<"rooms">,
+        actorNeopId,
       });
     }
 

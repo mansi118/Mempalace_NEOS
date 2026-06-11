@@ -43,6 +43,12 @@ import {
   safePatchRoom,
   safePatchWing,
 } from "../lib/safePatch.js";
+// Layer-1 SoT-side seat-scope guards (defense in depth, independent of /mcp dispatch).
+// actorNeopId=undefined → trusted internal caller (crons/ingestion); see access/enforce.ts.
+import {
+  assertActorCanWriteRoom,
+  assertActorCanReadRoom,
+} from "../access/enforce.js";
 
 // ─────────────────────────────────────────────────────────────────
 // PALACES
@@ -377,6 +383,7 @@ export const createCloset = mutation({
     visibility: v.optional(v.string()),
     ttlSeconds: v.optional(v.number()),
     needsReview: v.optional(v.boolean()),
+    actorNeopId: v.optional(v.string()),   // L1 seat-scope (undefined = trusted caller)
   },
   handler: async (
     ctx,
@@ -400,6 +407,8 @@ export const createCloset = mutation({
     if (room.palaceId !== args.palaceId) {
       throw new Error("room.palaceId mismatch with provided palaceId");
     }
+    // L1 SoT enforcement: a scoped seat may write only its own room.
+    assertActorCanWriteRoom(args.actorNeopId, room);
 
     // ── 3. Compute source-level dedupKey ───────────────────
     // Does NOT include content. Same (adapter, externalId) always produces
@@ -493,10 +502,14 @@ export const retractCloset = mutation({
     closetId: v.id("closets"),
     reason: v.string(),
     retractedBy: v.string(),
+    actorNeopId: v.optional(v.string()),   // L1 seat-scope (undefined = trusted caller)
   },
-  handler: async (ctx, { closetId, reason, retractedBy }) => {
+  handler: async (ctx, { closetId, reason, retractedBy, actorNeopId }) => {
     const closet = await ctx.db.get(closetId);
     if (!closet) throw new Error(`closet ${closetId} not found`);
+    // L1 SoT enforcement: write-guard via the closet's owning room.
+    const retractRoom = await ctx.db.get(closet.roomId);
+    if (retractRoom) assertActorCanWriteRoom(actorNeopId, retractRoom);
     if (closet.legalHold) {
       throw new Error(`closet ${closetId} is under legal hold; cannot retract`);
     }
@@ -614,6 +627,7 @@ export const createDrawer = mutation({
     fact: v.string(),
     validFrom: v.number(),
     confidence: v.number(),
+    actorNeopId: v.optional(v.string()),   // L1 seat-scope (undefined = trusted caller)
   },
   handler: async (ctx, args): Promise<Id<"drawers">> => {
     validateNonEmpty(args.fact, "fact");
@@ -624,6 +638,9 @@ export const createDrawer = mutation({
     if (closet.palaceId !== args.palaceId) {
       throw new Error("closet.palaceId mismatch");
     }
+    // L1 SoT enforcement: write-guard via the closet's owning room.
+    const drawerRoom = await ctx.db.get(closet.roomId);
+    if (drawerRoom) assertActorCanWriteRoom(args.actorNeopId, drawerRoom);
 
     return await ctx.db.insert("drawers", {
       closetId: args.closetId,
@@ -640,10 +657,14 @@ export const invalidateDrawer = mutation({
   args: {
     drawerId: v.id("drawers"),
     supersededBy: v.optional(v.id("drawers")),
+    actorNeopId: v.optional(v.string()),   // L1 seat-scope (undefined = trusted caller)
   },
-  handler: async (ctx, { drawerId, supersededBy }) => {
+  handler: async (ctx, { drawerId, supersededBy, actorNeopId }) => {
     const drawer = await ctx.db.get(drawerId);
     if (!drawer) throw new Error(`drawer ${drawerId} not found`);
+    // L1 SoT enforcement: write-guard via the drawer's owning room.
+    const invalRoom = await ctx.db.get(drawer.roomId);
+    if (invalRoom) assertActorCanWriteRoom(actorNeopId, invalRoom);
 
     await ctx.db.patch(drawerId, {
       validUntil: Date.now(),
@@ -664,6 +685,7 @@ export const createTunnel = mutation({
     relationship: v.string(),
     strength: v.number(),
     label: v.optional(v.string()),
+    actorNeopId: v.optional(v.string()),   // L1 seat-scope (undefined = trusted caller)
   },
   handler: async (ctx, args): Promise<Id<"tunnels">> => {
     validateTunnelRelationship(args.relationship);
@@ -677,6 +699,9 @@ export const createTunnel = mutation({
     const toRoom = await ctx.db.get(args.toRoomId);
     if (!fromRoom) throw new Error(`fromRoom ${args.fromRoomId} not found`);
     if (!toRoom) throw new Error(`toRoom ${args.toRoomId} not found`);
+    // L1 SoT enforcement: must OWN the origin room (write) and READ the target.
+    assertActorCanWriteRoom(args.actorNeopId, fromRoom);
+    assertActorCanReadRoom(args.actorNeopId, toRoom);
 
     // Cross-palace isolation: both rooms must belong to the same palace,
     // and that palace must match the provided palaceId.
@@ -705,6 +730,7 @@ export const mergeRooms = mutation({
     palaceId: v.id("palaces"),
     sourceRoomId: v.id("rooms"),
     targetRoomId: v.id("rooms"),
+    actorNeopId: v.optional(v.string()),   // L1 seat-scope (undefined = trusted caller)
   },
   handler: async (ctx, args) => {
     if (args.sourceRoomId === args.targetRoomId) {
@@ -718,6 +744,9 @@ export const mergeRooms = mutation({
     if (source.palaceId !== args.palaceId || target.palaceId !== args.palaceId) {
       throw new Error("both rooms must belong to the same palace");
     }
+    // L1 SoT enforcement: destructive cross-room write — must OWN both rooms.
+    assertActorCanWriteRoom(args.actorNeopId, source);
+    assertActorCanWriteRoom(args.actorNeopId, target);
 
     // Move all closets from source to target.
     const closets = await ctx.db
