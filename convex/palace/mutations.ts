@@ -192,6 +192,7 @@ export const createRoom = mutation({
     name: v.string(),
     summary: v.string(),
     tags: v.array(v.string()),
+    ownerNeopId: v.optional(v.string()),   // seat-isolation: set = personal room; unset = company
   },
   handler: async (ctx, args): Promise<Id<"rooms">> => {
     validateSlug(args.name, "room.name");
@@ -222,6 +223,7 @@ export const createRoom = mutation({
       closetCount: 0,
       lastUpdated: Date.now(),
       tags: args.tags,
+      ...(args.ownerNeopId ? { ownerNeopId: args.ownerNeopId } : {}),
     });
 
     // Counter denormalization (atomic with insert via Convex OCC).
@@ -243,6 +245,7 @@ export const getOrCreateRoom = mutation({
     wingName: v.string(),
     roomName: v.string(),
     summary: v.optional(v.string()),
+    ownerNeopId: v.optional(v.string()),   // seat-isolation: stamp personal ownership on create
   },
   handler: async (ctx, args): Promise<Id<"rooms">> => {
     // Normalize names.
@@ -293,6 +296,7 @@ export const getOrCreateRoom = mutation({
         closetCount: 0,
         lastUpdated: Date.now(),
         tags: ["auto-created"],
+        ...(args.ownerNeopId ? { ownerNeopId: args.ownerNeopId } : {}),
       });
       await safePatchHall(ctx, hall._id, { roomCount: hall.roomCount + 1 });
       await safePatchWing(ctx, quarantine._id, {
@@ -321,6 +325,7 @@ export const getOrCreateRoom = mutation({
       closetCount: 0,
       lastUpdated: Date.now(),
       tags: ["auto-created"],
+      ...(args.ownerNeopId ? { ownerNeopId: args.ownerNeopId } : {}),
     });
     await safePatchHall(ctx, hall._id, { roomCount: hall.roomCount + 1 });
     await safePatchWing(ctx, wing._id, {

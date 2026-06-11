@@ -17,6 +17,13 @@ import {
   filterByReadAccess,
   runtimeOpForTool,
   AccessDenied,
+  ownsRoom,
+  isCompanyRoom,
+  canReadRoom,
+  canWriteRoom,
+  assertNeopScope,
+  assertNeopReadScope,
+  filterRoomsByReadScope,
 } from "../convex/access/enforce.js";
 import { ADMIN_NEOP_ID } from "../convex/lib/enums.js";
 
@@ -251,6 +258,66 @@ describe("Search result filtering", () => {
     // clients/conversation ✓ (read: *), legal ✗, team ✗, rd ✗
     expect(filtered.length).toBe(2);
     expect(filtered.map((r) => r.wingName)).toEqual(["platform", "clients"]);
+  });
+});
+
+// ─── Seat isolation: per-room ownership (Phase 1 ACL) ───────────
+
+describe("Seat isolation — room ownership", () => {
+  const ariaRoom = { ownerNeopId: "aria" };       // owned by seat aria
+  const icdRoom = { ownerNeopId: "icd" };          // owned by another seat (icd)
+  const companyRoom = { ownerNeopId: undefined };  // shared/legacy room, no owner
+
+  test("ownsRoom / isCompanyRoom basics", () => {
+    expect(ownsRoom(ARIA, ariaRoom)).toBe(true);
+    expect(ownsRoom(ARIA, icdRoom)).toBe(false);
+    expect(ownsRoom(ARIA, companyRoom)).toBe(false);   // a company room is owned by no seat
+    expect(isCompanyRoom(companyRoom)).toBe(true);
+    expect(isCompanyRoom(ariaRoom)).toBe(false);
+  });
+
+  test("WRITE scope: a scoped seat writes ONLY its own room", () => {
+    expect(canWriteRoom(ARIA, ariaRoom)).toBe(true);
+    expect(canWriteRoom(ARIA, icdRoom)).toBe(false);      // another seat's room — denied
+    expect(canWriteRoom(ARIA, companyRoom)).toBe(false);  // company room is read-only for a seat
+  });
+
+  test("READ scope: own room OR company room; another seat's room denied", () => {
+    expect(canReadRoom(ARIA, ariaRoom)).toBe(true);
+    expect(canReadRoom(ARIA, companyRoom)).toBe(true);    // read ⊇ write — company readable
+    expect(canReadRoom(ARIA, icdRoom)).toBe(false);       // cross-seat read denied
+  });
+
+  test("assertNeopScope (write) throws on cross-seat + company, allows own", () => {
+    expect(() => assertNeopScope(ARIA, icdRoom)).toThrow(AccessDenied);
+    expect(() => assertNeopScope(ARIA, companyRoom)).toThrow(AccessDenied);
+    expect(() => assertNeopScope(ARIA, ariaRoom)).not.toThrow();
+  });
+
+  test("assertNeopReadScope (read) throws only on another seat's room", () => {
+    expect(() => assertNeopReadScope(ARIA, icdRoom)).toThrow(AccessDenied);
+    expect(() => assertNeopReadScope(ARIA, companyRoom)).not.toThrow();
+    expect(() => assertNeopReadScope(ARIA, ariaRoom)).not.toThrow();
+  });
+
+  test("admin bypasses room scope entirely", () => {
+    expect(canWriteRoom(ADMIN, icdRoom)).toBe(true);
+    expect(canReadRoom(ADMIN, icdRoom)).toBe(true);
+    expect(() => assertNeopScope(ADMIN, icdRoom)).not.toThrow();
+  });
+
+  test("scope keys on effectiveNeopId (parent), not the instance neopId", () => {
+    // ICD_ZOO.neopId = "icd_zoo_media" but effectiveNeopId = "icd" (scoped instance).
+    // Ownership must resolve to the PARENT seat, so icd-owned rooms are writable.
+    expect(canWriteRoom(ICD_ZOO, icdRoom)).toBe(true);
+    expect(canWriteRoom(ICD_ZOO, ariaRoom)).toBe(false);
+  });
+
+  test("filterRoomsByReadScope keeps own + company, drops other seats'", () => {
+    const rooms = [ariaRoom, icdRoom, companyRoom];
+    const visible = filterRoomsByReadScope(ARIA, rooms);
+    expect(visible).toEqual([ariaRoom, companyRoom]);
+    expect(filterRoomsByReadScope(ADMIN, rooms)).toEqual(rooms);  // admin sees all
   });
 });
 

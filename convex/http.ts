@@ -363,11 +363,14 @@ async function dispatch(
       });
 
     case "palace_create_room":
+      // Seat-isolation: a scoped seat's new room is PERSONAL to it; admin creates
+      // shared/company rooms (no owner). Honest-caller neopId (Phase 1 posture).
       return ctx.runMutation(api.palace.mutations.getOrCreateRoom, {
         palaceId,
         wingName: params.wingName as string,
         roomName: params.roomName as string,
         summary: params.summary as string | undefined,
+        ownerNeopId: perms.isAdmin ? undefined : perms.effectiveNeopId,
       });
 
     case "palace_create_tunnel":
