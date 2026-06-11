@@ -532,6 +532,100 @@ describe("Gate B — seat isolation through /mcp dispatch", () => {
 // is gated on the live FalkorDB backend, so it is not part of the offline suite.
 // ─────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────
+// Gate A+ / L1: SoT-side INDEPENDENT enforcement. Calls the Convex mutations
+// DIRECTLY (no /mcp dispatch) with an actorNeopId — proves seat isolation holds
+// even when Layer 3 is bypassed (the deepest independence proof), AND that
+// actorNeopId=undefined still lets trusted internal callers (crons/ingestion) through.
+// ─────────────────────────────────────────────────────────────────
+
+const closetArgs = (palaceId: string, roomId: string, actorNeopId?: string) => ({
+  palaceId, roomId, content: "direct-call content", category: "decision",
+  sourceType: "manual", sourceAdapter: "test", sourceExternalId: `direct-${roomId}-${actorNeopId ?? "trusted"}`,
+  authorType: "system", authorId: "test", confidence: 0.8,
+  ...(actorNeopId !== undefined ? { actorNeopId } : {}),
+});
+
+describe("Gate A+ — L1 SoT independent enforcement (direct mutation calls)", () => {
+  test("createCloset DIRECT into another seat's room → denied (L3 bypassed)", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    await expect(
+      t.mutation(api.palace.mutations.createCloset, closetArgs(palaceId, roomB, "seat_a") as any),
+    ).rejects.toThrow(/SoT write-scope/i);
+  });
+
+  test("createCloset DIRECT into own room → allowed", async () => {
+    const { t, palaceId, roomA } = await setupSeatPalace();
+    const r = await t.mutation(api.palace.mutations.createCloset, closetArgs(palaceId, roomA, "seat_a") as any);
+    expect(r.status).toBe("created");
+  });
+
+  test("createCloset DIRECT into a company room → denied (company is read-only for a seat)", async () => {
+    const { t, palaceId, roomCompany } = await setupSeatPalace();
+    await expect(
+      t.mutation(api.palace.mutations.createCloset, closetArgs(palaceId, roomCompany, "seat_a") as any),
+    ).rejects.toThrow(/SoT write-scope/i);
+  });
+
+  test("createCloset DIRECT with NO actorNeopId → allowed (trusted internal caller preserved)", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const r = await t.mutation(api.palace.mutations.createCloset, closetArgs(palaceId, roomB) as any);
+    expect(r.status).toBe("created"); // crons/ingestion still write anywhere
+  });
+
+  test("createCloset DIRECT with actorNeopId=_admin → allowed (admin bypass)", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const r = await t.mutation(api.palace.mutations.createCloset, closetArgs(palaceId, roomB, "_admin") as any);
+    expect(r.status).toBe("created");
+  });
+
+  test("createDrawer DIRECT into another seat's closet → denied (closet→room)", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const { closetId } = await seedClosetDrawer(t, palaceId, roomB);
+    await expect(
+      t.mutation(api.palace.mutations.createDrawer, {
+        closetId, palaceId, fact: "x", validFrom: 1, confidence: 0.9, actorNeopId: "seat_a",
+      } as any),
+    ).rejects.toThrow(/SoT write-scope/i);
+  });
+
+  test("invalidateDrawer DIRECT in another seat's room → denied (drawer→room)", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const { drawerId } = await seedClosetDrawer(t, palaceId, roomB);
+    await expect(
+      t.mutation(api.palace.mutations.invalidateDrawer, { drawerId, actorNeopId: "seat_a" } as any),
+    ).rejects.toThrow(/SoT write-scope/i);
+  });
+
+  test("retractCloset DIRECT in another seat's room → denied", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const { closetId } = await seedClosetDrawer(t, palaceId, roomB);
+    await expect(
+      t.mutation(api.palace.mutations.retractCloset, {
+        closetId, reason: "x", retractedBy: "seat_a", actorNeopId: "seat_a",
+      } as any),
+    ).rejects.toThrow(/SoT write-scope/i);
+  });
+
+  test("createTunnel DIRECT from another seat's room → denied", async () => {
+    const { t, palaceId, roomA, roomB } = await setupSeatPalace();
+    await expect(
+      t.mutation(api.palace.mutations.createTunnel, {
+        palaceId, fromRoomId: roomB, toRoomId: roomA, relationship: "references", strength: 0.5, actorNeopId: "seat_a",
+      } as any),
+    ).rejects.toThrow(/SoT write-scope/i);
+  });
+
+  test("mergeRooms DIRECT not owning both → denied", async () => {
+    const { t, palaceId, roomA, roomB } = await setupSeatPalace();
+    await expect(
+      t.mutation(api.palace.mutations.mergeRooms, {
+        palaceId, sourceRoomId: roomB, targetRoomId: roomA, actorNeopId: "seat_a",
+      } as any),
+    ).rejects.toThrow(/SoT write-scope/i);
+  });
+});
+
 describe("Gate D — graph seat isolation (DEFERRED)", () => {
   test.skip("acl_graph_no_private_crossseat_edges", () => {
     // WHEN un-skipped (post-decision to seat-isolate the graph):
