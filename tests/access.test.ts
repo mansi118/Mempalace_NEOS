@@ -520,3 +520,24 @@ describe("Gate B — seat isolation through /mcp dispatch", () => {
     expect(status).toBe(200);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────
+// Gate D — Layer 2 (FalkorDB/Graphiti) seat isolation. DEFERRED by decision
+// 2026-06-11: the graph stays tenant-shared (one graph per palace) because
+// seat-isolating it would fragment cross-seat entity resolution. This SKIPPED
+// placeholder keeps the gap VISIBLE (vs silently absent) and pins the exact
+// condition to assert if/when the shared-graph posture is revisited: private-wing
+// content must not produce any cross-seat-traversable edge in the palace graph.
+// The real assertion lives against the bridge (services/graphiti_bridge.py) and
+// is gated on the live FalkorDB backend, so it is not part of the offline suite.
+// ─────────────────────────────────────────────────────────────────
+
+describe("Gate D — graph seat isolation (DEFERRED)", () => {
+  test.skip("acl_graph_no_private_crossseat_edges", () => {
+    // WHEN un-skipped (post-decision to seat-isolate the graph):
+    //   - seat_a writes private-wing content → bridge ingests episode into the palace graph
+    //   - assert NO edge/path makes that content traversable from seat_b's subgraph
+    //     (group_id / namespace boundary holds), while company content stays shared.
+    // Requires a live/stubbed FalkorDB; tracked with Gate D, not offline-gradeable here.
+  });
+});
