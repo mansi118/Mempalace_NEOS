@@ -210,6 +210,13 @@ export const listClosetsByCategory = query({
 
 // ─── DRAWERS ─────────────────────────────────────────────────
 
+export const getDrawer = query({
+  args: { drawerId: v.id("drawers") },
+  handler: async (ctx, { drawerId }) => {
+    return await ctx.db.get(drawerId);
+  },
+});
+
 export const listDrawers = query({
   args: {
     closetId: v.id("closets"),

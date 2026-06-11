@@ -24,6 +24,10 @@ import {
   applyScopeToFilter,
   filterByReadAccess,
   runtimeOpForTool,
+  // Seat isolation (Phase 1 ACL, Gate B): per-room ownership guards.
+  assertNeopScope,
+  assertNeopReadScope,
+  filterRoomsByReadScope,
   AccessDenied,
 } from "./access/enforce.js";
 
@@ -153,6 +157,38 @@ http.route({
   }),
 });
 
+// ─── Seat-isolation helpers (Gate B) ────────────────────────────
+// Resolve the owning room for an addressed entity, then the caller applies the
+// pure scope guard (assertNeopScope / assertNeopReadScope). Used by non-admin
+// callers only — admin short-circuits before any of these fetch.
+
+async function loadRoom(
+  ctx: any,
+  roomId: Id<"rooms">,
+): Promise<{ ownerNeopId?: string | null; wingId: Id<"wings"> }> {
+  const room = await ctx.runQuery(api.palace.queries.getRoom, { roomId });
+  if (!room) throw new Error(`room ${roomId} not found`);
+  return room;
+}
+
+async function roomOfCloset(
+  ctx: any,
+  closetId: Id<"closets">,
+): Promise<{ ownerNeopId?: string | null }> {
+  const closet = await ctx.runQuery(api.palace.queries.getCloset, { closetId });
+  if (!closet) throw new Error(`closet ${closetId} not found`);
+  return loadRoom(ctx, closet.roomId);
+}
+
+async function roomOfDrawer(
+  ctx: any,
+  drawerId: Id<"drawers">,
+): Promise<{ ownerNeopId?: string | null }> {
+  const drawer = await ctx.runQuery(api.palace.queries.getDrawer, { drawerId });
+  if (!drawer) throw new Error(`drawer ${drawerId} not found`);
+  return loadRoom(ctx, drawer.roomId);
+}
+
 // ─── Tool dispatcher (with permissions threaded through) ────────
 
 async function dispatch(
@@ -253,18 +289,24 @@ async function dispatch(
         includeArchived: params.includeArchived as boolean | undefined,
       });
 
-    case "palace_list_rooms":
-      return ctx.runQuery(api.palace.queries.listRoomsByWing, {
+    case "palace_list_rooms": {
+      const rooms: any[] = await ctx.runQuery(api.palace.queries.listRoomsByWing, {
         wingId: params.wingId as Id<"wings">,
       });
+      // Seat isolation: keep own + company rooms; drop other seats' personal rooms.
+      return filterRoomsByReadScope(perms, rooms);
+    }
 
     case "palace_get_room": {
-      // Scope check: can this NEop access this room's wing?
-      if (perms.scopeWing) {
+      if (!perms.isAdmin) {
         const room: any = await ctx.runQuery(api.palace.queries.getRoom, {
           roomId: params.roomId as Id<"rooms">,
         });
-        if (room) {
+        if (!room) throw new Error(`room ${params.roomId} not found`);
+        // Seat isolation: own room OR any company room; another seat's room → deny.
+        assertNeopReadScope(perms, room);
+        // Legacy wing-scope binding (Phase 7) preserved.
+        if (perms.scopeWing) {
           const wing: any = await ctx.runQuery(api.palace.queries.getWingByName, {
             palaceId,
             name: perms.scopeWing,
@@ -282,13 +324,20 @@ async function dispatch(
       });
     }
 
-    case "palace_walk_tunnel":
+    case "palace_walk_tunnel": {
+      // Seat isolation: read-guard the traversal ENTRY room. NOTE (Phase 1):
+      // rooms reached downstream by the walk are not yet per-result filtered
+      // (honest-caller, single-tenant scope). Deep traversal filtering is a follow-up.
+      if (!perms.isAdmin) {
+        assertNeopReadScope(perms, await loadRoom(ctx, params.fromRoomId as Id<"rooms">));
+      }
       return ctx.runQuery(api.serving.tunnels.walkTunnel, {
         palaceId,
         fromRoomId: params.fromRoomId as Id<"rooms">,
         maxDepth: params.maxDepth as number | undefined,
         relationshipFilter: params.relationshipFilter as string | undefined,
       });
+    }
 
     // ── TWIN (per-seat structured state; addressed, never searched) ──
     // Scope: keyed by (palaceId, AUTHENTICATED neopId) only. `neopId` here is the resolved
@@ -312,6 +361,12 @@ async function dispatch(
       });
 
     // ── STORAGE ───────────────────────────────────────────
+    // palace_remember routes through the TRUSTED ingestion pipeline (ingestExchange →
+    // getOrCreateRoom → createCloset), which bypasses the per-room write guards by design.
+    // Seat isolation is achieved at the ROUTING layer instead (Gate B-2): the caller's seat
+    // is passed as ownerNeopId, so getOrCreateRoom resolves/creates rooms in this seat's OWN
+    // owner-namespace — auto-routed memory can never land in a company- or another-seat's room.
+    // Admin remembers into shared company rooms (ownerNeopId=undefined).
     case "palace_remember":
       return ctx.runAction(api.ingestion.ingest.ingestExchange, {
         palaceId,
@@ -321,6 +376,7 @@ async function dispatch(
         conversationId: `mcp_${neopId}_${Date.now()}`,
         conversationTitle: (params.title as string) ?? "MCP memory",
         exchangeIndex: 0,
+        ownerNeopId: perms.isAdmin ? undefined : perms.effectiveNeopId,
       });
 
     case "palace_add_closet": {
@@ -330,6 +386,8 @@ async function dispatch(
           roomId: params.roomId as Id<"rooms">,
         });
         if (!room) throw new Error(`room ${params.roomId} not found`);
+        // Seat isolation: a scoped seat may write ONLY its own room.
+        assertNeopScope(perms, room);
         const wings: any[] = await ctx.runQuery(api.palace.queries.listWings, { palaceId });
         const wing = wings.find((w: any) => w._id === room.wingId);
         if (!wing) throw new Error(`wing for room ${params.roomId} not found`);
@@ -353,7 +411,11 @@ async function dispatch(
       });
     }
 
-    case "palace_add_drawer":
+    case "palace_add_drawer": {
+      // Seat isolation: write-guard via the drawer's owning closet → room.
+      if (!perms.isAdmin) {
+        assertNeopScope(perms, await roomOfCloset(ctx, params.closetId as Id<"closets">));
+      }
       return ctx.runMutation(api.palace.mutations.createDrawer, {
         closetId: params.closetId as Id<"closets">,
         palaceId,
@@ -361,16 +423,25 @@ async function dispatch(
         validFrom: Date.now(),
         confidence: (params.confidence as number) ?? 0.8,
       });
+    }
 
     case "palace_create_room":
+      // Seat-isolation: a scoped seat's new room is PERSONAL to it; admin creates
+      // shared/company rooms (no owner). Honest-caller neopId (Phase 1 posture).
       return ctx.runMutation(api.palace.mutations.getOrCreateRoom, {
         palaceId,
         wingName: params.wingName as string,
         roomName: params.roomName as string,
         summary: params.summary as string | undefined,
+        ownerNeopId: perms.isAdmin ? undefined : perms.effectiveNeopId,
       });
 
-    case "palace_create_tunnel":
+    case "palace_create_tunnel": {
+      // Seat isolation: must OWN the origin room (write) and READ the target room.
+      if (!perms.isAdmin) {
+        assertNeopScope(perms, await loadRoom(ctx, params.fromRoomId as Id<"rooms">));
+        assertNeopReadScope(perms, await loadRoom(ctx, params.toRoomId as Id<"rooms">));
+      }
       return ctx.runMutation(api.palace.mutations.createTunnel, {
         palaceId,
         fromRoomId: params.fromRoomId as Id<"rooms">,
@@ -379,27 +450,44 @@ async function dispatch(
         strength: (params.strength as number) ?? 0.5,
         label: params.label as string | undefined,
       });
+    }
 
     // ── MAINTENANCE ───────────────────────────────────────
-    case "palace_invalidate":
+    case "palace_invalidate": {
+      // Seat isolation: write-guard via the drawer's owning room.
+      if (!perms.isAdmin) {
+        assertNeopScope(perms, await roomOfDrawer(ctx, params.drawerId as Id<"drawers">));
+      }
       return ctx.runMutation(api.palace.mutations.invalidateDrawer, {
         drawerId: params.drawerId as Id<"drawers">,
         supersededBy: params.supersededBy as Id<"drawers"> | undefined,
       });
+    }
 
-    case "palace_retract_closet":
+    case "palace_retract_closet": {
+      // Seat isolation: write-guard via the closet's owning room.
+      if (!perms.isAdmin) {
+        assertNeopScope(perms, await roomOfCloset(ctx, params.closetId as Id<"closets">));
+      }
       return ctx.runMutation(api.palace.mutations.retractCloset, {
         closetId: params.closetId as Id<"closets">,
         reason: params.reason as string,
         retractedBy: neopId,
       });
+    }
 
-    case "palace_merge_rooms":
+    case "palace_merge_rooms": {
+      // Seat isolation: destructive cross-room write — must OWN both source and target.
+      if (!perms.isAdmin) {
+        assertNeopScope(perms, await loadRoom(ctx, params.sourceRoomId as Id<"rooms">));
+        assertNeopScope(perms, await loadRoom(ctx, params.targetRoomId as Id<"rooms">));
+      }
       return ctx.runMutation(api.palace.mutations.mergeRooms, {
         palaceId,
         sourceRoomId: params.sourceRoomId as Id<"rooms">,
         targetRoomId: params.targetRoomId as Id<"rooms">,
       });
+    }
 
     // ── META ──────────────────────────────────────────────
     case "palace_stats":

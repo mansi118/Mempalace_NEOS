@@ -1,0 +1,31 @@
+name: CI
+
+# Runs the Convex test suite — including the seat-isolation ACL (Layers 1 + 3 + B-2):
+#   - tests/access.test.ts : pure scope predicates + 13 end-to-end /mcp dispatch tests
+#     (convex-test t.fetch) — cross-seat/company writes & cross-seat reads return 403,
+#     list-filter drops foreign rooms, one-hop closet/drawer resolution, admin bypass.
+#   - tests/palace.test.ts : Phase-1 invariants + Gate B-2 owner-namespaced room routing.
+# vitest does not typecheck (that's the separate `typecheck` script), and convex-test
+# resolves functions dynamically, so the suite runs against the committed _generated.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - name: vitest (ACL Layers 1+3 + Gate B-2)
+        run: npm test

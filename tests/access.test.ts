@@ -17,8 +17,18 @@ import {
   filterByReadAccess,
   runtimeOpForTool,
   AccessDenied,
+  ownsRoom,
+  isCompanyRoom,
+  canReadRoom,
+  canWriteRoom,
+  assertNeopScope,
+  assertNeopReadScope,
+  filterRoomsByReadScope,
 } from "../convex/access/enforce.js";
 import { ADMIN_NEOP_ID } from "../convex/lib/enums.js";
+import { convexTest } from "convex-test";
+import schema from "../convex/schema.js";
+import { api } from "../convex/_generated/api.js";
 
 // ─── Test permission sets ───────────────────────────────────────
 
@@ -254,6 +264,66 @@ describe("Search result filtering", () => {
   });
 });
 
+// ─── Seat isolation: per-room ownership (Phase 1 ACL) ───────────
+
+describe("Seat isolation — room ownership", () => {
+  const ariaRoom = { ownerNeopId: "aria" };       // owned by seat aria
+  const icdRoom = { ownerNeopId: "icd" };          // owned by another seat (icd)
+  const companyRoom = { ownerNeopId: undefined };  // shared/legacy room, no owner
+
+  test("ownsRoom / isCompanyRoom basics", () => {
+    expect(ownsRoom(ARIA, ariaRoom)).toBe(true);
+    expect(ownsRoom(ARIA, icdRoom)).toBe(false);
+    expect(ownsRoom(ARIA, companyRoom)).toBe(false);   // a company room is owned by no seat
+    expect(isCompanyRoom(companyRoom)).toBe(true);
+    expect(isCompanyRoom(ariaRoom)).toBe(false);
+  });
+
+  test("WRITE scope: a scoped seat writes ONLY its own room", () => {
+    expect(canWriteRoom(ARIA, ariaRoom)).toBe(true);
+    expect(canWriteRoom(ARIA, icdRoom)).toBe(false);      // another seat's room — denied
+    expect(canWriteRoom(ARIA, companyRoom)).toBe(false);  // company room is read-only for a seat
+  });
+
+  test("READ scope: own room OR company room; another seat's room denied", () => {
+    expect(canReadRoom(ARIA, ariaRoom)).toBe(true);
+    expect(canReadRoom(ARIA, companyRoom)).toBe(true);    // read ⊇ write — company readable
+    expect(canReadRoom(ARIA, icdRoom)).toBe(false);       // cross-seat read denied
+  });
+
+  test("assertNeopScope (write) throws on cross-seat + company, allows own", () => {
+    expect(() => assertNeopScope(ARIA, icdRoom)).toThrow(AccessDenied);
+    expect(() => assertNeopScope(ARIA, companyRoom)).toThrow(AccessDenied);
+    expect(() => assertNeopScope(ARIA, ariaRoom)).not.toThrow();
+  });
+
+  test("assertNeopReadScope (read) throws only on another seat's room", () => {
+    expect(() => assertNeopReadScope(ARIA, icdRoom)).toThrow(AccessDenied);
+    expect(() => assertNeopReadScope(ARIA, companyRoom)).not.toThrow();
+    expect(() => assertNeopReadScope(ARIA, ariaRoom)).not.toThrow();
+  });
+
+  test("admin bypasses room scope entirely", () => {
+    expect(canWriteRoom(ADMIN, icdRoom)).toBe(true);
+    expect(canReadRoom(ADMIN, icdRoom)).toBe(true);
+    expect(() => assertNeopScope(ADMIN, icdRoom)).not.toThrow();
+  });
+
+  test("scope keys on effectiveNeopId (parent), not the instance neopId", () => {
+    // ICD_ZOO.neopId = "icd_zoo_media" but effectiveNeopId = "icd" (scoped instance).
+    // Ownership must resolve to the PARENT seat, so icd-owned rooms are writable.
+    expect(canWriteRoom(ICD_ZOO, icdRoom)).toBe(true);
+    expect(canWriteRoom(ICD_ZOO, ariaRoom)).toBe(false);
+  });
+
+  test("filterRoomsByReadScope keeps own + company, drops other seats'", () => {
+    const rooms = [ariaRoom, icdRoom, companyRoom];
+    const visible = filterRoomsByReadScope(ARIA, rooms);
+    expect(visible).toEqual([ariaRoom, companyRoom]);
+    expect(filterRoomsByReadScope(ADMIN, rooms)).toEqual(rooms);  // admin sees all
+  });
+});
+
 // ─── Tool-to-op mapping tests ───────────────────────────────────
 
 describe("Tool to runtime op mapping", () => {
@@ -275,5 +345,199 @@ describe("Tool to runtime op mapping", () => {
 
   test("unknown tool returns null", () => {
     expect(runtimeOpForTool("nonexistent_tool")).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Gate B: end-to-end seat isolation through the /mcp HTTP dispatch.
+//
+// Drives the REAL convex/http.ts dispatcher via convex-test's t.fetch — this
+// proves the WIRING (which guard at which case), not just the pure predicates
+// covered above. Every Gate B tool resolves to a Convex query/mutation (no
+// actions ⇒ no network I/O), so both allow AND deny paths grade fully offline.
+// ─────────────────────────────────────────────────────────────────
+
+// Two seats + a company room, all in one "platform" wing. seat_a gets broad
+// content access + all runtime ops, so the ONLY thing that can deny is the new
+// per-room ownership guard — isolating Gate B from the Phase-7 content layer.
+async function setupSeatPalace() {
+  const t = convexTest(schema);
+  const palaceId = await t.mutation(api.palace.mutations.createPalace, {
+    name: "ACL Palace", clientId: "acl", falkordbGraph: "acl_graph", createdBy: "system",
+  });
+  const wingId = await t.mutation(api.palace.mutations.createWing, {
+    palaceId, name: "platform", description: "Platform", sortOrder: 1,
+  });
+  const hallId = await t.mutation(api.palace.mutations.createHall, {
+    wingId, palaceId, type: "facts",
+  });
+  const roomA = await t.mutation(api.palace.mutations.createRoom, {
+    hallId, wingId, palaceId, name: "alpha", summary: "A's room", tags: [], ownerNeopId: "seat_a",
+  });
+  const roomCompany = await t.mutation(api.palace.mutations.createRoom, {
+    hallId, wingId, palaceId, name: "shared", summary: "Company room", tags: [],
+  });
+  const roomB = await t.mutation(api.palace.mutations.createRoom, {
+    hallId, wingId, palaceId, name: "beta", summary: "B's room", tags: [], ownerNeopId: "seat_b",
+  });
+  await t.mutation(api.palace.mutations.markPalaceReady, { palaceId });
+  await t.run(async (ctx: any) => {
+    await ctx.db.insert("neop_permissions", {
+      palaceId,
+      neopId: "seat_a",
+      runtimeOps: ["recall", "remember", "promote", "erase", "audit"],
+      contentAccess: JSON.stringify({ platform: { read: "*", write: "*" } }),
+    });
+  });
+  return { t, palaceId, wingId, hallId, roomA, roomCompany, roomB };
+}
+
+// Seed a closet (+ drawer) inside a room, returning their ids — used to test
+// one-hop closet→room and drawer→room write-guard resolution.
+async function seedClosetDrawer(t: any, palaceId: string, roomId: string) {
+  const r = await t.mutation(api.palace.mutations.createCloset, {
+    palaceId, roomId, content: "owned by B", category: "fact",
+    sourceType: "manual", sourceAdapter: "test", sourceExternalId: "b-seed",
+    authorType: "system", authorId: "test", confidence: 0.9,
+  });
+  await t.mutation(api.palace.mutations.createDrawer, {
+    closetId: r.closetId, palaceId, fact: "B fact", validFrom: 1, confidence: 0.9,
+  });
+  const drawers = await t.query(api.palace.queries.listDrawers, { closetId: r.closetId });
+  return { closetId: r.closetId as string, drawerId: drawers[0]._id as string };
+}
+
+async function call(
+  t: any, tool: string, params: Record<string, unknown>, neopId: string, palaceId: string,
+) {
+  const res = await t.fetch("/mcp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tool, params, neopId, palaceId }),
+  });
+  return { status: res.status, json: await res.json() };
+}
+
+describe("Gate B — seat isolation through /mcp dispatch", () => {
+  // ── WRITE scope (own room only) ─────────────────────────────
+  test("WRITE: seat writes its OWN room → ok", async () => {
+    const { t, palaceId, roomA } = await setupSeatPalace();
+    const { status, json } = await call(t, "palace_add_closet",
+      { roomId: roomA, content: "A decision", category: "decision" }, "seat_a", palaceId);
+    expect(status).toBe(200);
+    expect(json.status).toBe("ok");
+  });
+
+  test("WRITE: seat CANNOT write another seat's room → 403", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const { status, json } = await call(t, "palace_add_closet",
+      { roomId: roomB, content: "sneak", category: "decision" }, "seat_a", palaceId);
+    expect(status).toBe(403);
+    expect(json.error).toMatch(/own room/i);
+  });
+
+  test("WRITE: seat CANNOT write a company room (read-only) → 403", async () => {
+    const { t, palaceId, roomCompany } = await setupSeatPalace();
+    const { status } = await call(t, "palace_add_closet",
+      { roomId: roomCompany, content: "x", category: "decision" }, "seat_a", palaceId);
+    expect(status).toBe(403);
+  });
+
+  // ── READ scope (own + company) ──────────────────────────────
+  test("READ: seat can read its OWN room → ok", async () => {
+    const { t, palaceId, roomA } = await setupSeatPalace();
+    const { status } = await call(t, "palace_get_room", { roomId: roomA }, "seat_a", palaceId);
+    expect(status).toBe(200);
+  });
+
+  test("READ: seat can read a COMPANY room → ok", async () => {
+    const { t, palaceId, roomCompany } = await setupSeatPalace();
+    const { status } = await call(t, "palace_get_room", { roomId: roomCompany }, "seat_a", palaceId);
+    expect(status).toBe(200);
+  });
+
+  test("READ: seat CANNOT read another seat's room → 403", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const { status } = await call(t, "palace_get_room", { roomId: roomB }, "seat_a", palaceId);
+    expect(status).toBe(403);
+  });
+
+  // ── LIST filter ─────────────────────────────────────────────
+  test("LIST: rooms filtered to own + company; other seat's room hidden", async () => {
+    const { t, palaceId, wingId, roomA, roomCompany, roomB } = await setupSeatPalace();
+    const { status, json } = await call(t, "palace_list_rooms", { wingId }, "seat_a", palaceId);
+    expect(status).toBe(200);
+    const ids = (json.data as any[]).map((r) => r._id);
+    expect(ids).toContain(roomA);
+    expect(ids).toContain(roomCompany);
+    expect(ids).not.toContain(roomB);
+  });
+
+  // ── One-hop resolution: closet→room and drawer→room ─────────
+  test("ERASE: seat CANNOT retract a closet in another seat's room → 403", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const { closetId } = await seedClosetDrawer(t, palaceId, roomB);
+    const { status } = await call(t, "palace_retract_closet",
+      { closetId, reason: "nope" }, "seat_a", palaceId);
+    expect(status).toBe(403);
+  });
+
+  test("WRITE: seat CANNOT add a drawer to another seat's closet → 403", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const { closetId } = await seedClosetDrawer(t, palaceId, roomB);
+    const { status } = await call(t, "palace_add_drawer",
+      { closetId, fact: "sneak" }, "seat_a", palaceId);
+    expect(status).toBe(403);
+  });
+
+  test("WRITE: seat CANNOT invalidate a drawer in another seat's room → 403", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const { drawerId } = await seedClosetDrawer(t, palaceId, roomB);
+    const { status } = await call(t, "palace_invalidate", { drawerId }, "seat_a", palaceId);
+    expect(status).toBe(403);
+  });
+
+  // ── Multi-room writes: tunnel (own from) and merge (own both) ─
+  test("TUNNEL: seat CANNOT create a tunnel FROM another seat's room → 403", async () => {
+    const { t, palaceId, roomA, roomB } = await setupSeatPalace();
+    const { status } = await call(t, "palace_create_tunnel",
+      { fromRoomId: roomB, toRoomId: roomA, relationship: "references" }, "seat_a", palaceId);
+    expect(status).toBe(403);
+  });
+
+  test("MERGE: seat CANNOT merge when it doesn't own both rooms → 403", async () => {
+    const { t, palaceId, roomA, roomB } = await setupSeatPalace();
+    const { status } = await call(t, "palace_merge_rooms",
+      { sourceRoomId: roomB, targetRoomId: roomA }, "seat_a", palaceId);
+    expect(status).toBe(403);
+  });
+
+  // ── Admin bypass ────────────────────────────────────────────
+  test("ADMIN: bypasses seat isolation writing another seat's room → ok", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const { status } = await call(t, "palace_add_closet",
+      { roomId: roomB, content: "admin override", category: "decision" }, "_admin", palaceId);
+    expect(status).toBe(200);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Gate D — Layer 2 (FalkorDB/Graphiti) seat isolation. DEFERRED by decision
+// 2026-06-11: the graph stays tenant-shared (one graph per palace) because
+// seat-isolating it would fragment cross-seat entity resolution. This SKIPPED
+// placeholder keeps the gap VISIBLE (vs silently absent) and pins the exact
+// condition to assert if/when the shared-graph posture is revisited: private-wing
+// content must not produce any cross-seat-traversable edge in the palace graph.
+// The real assertion lives against the bridge (services/graphiti_bridge.py) and
+// is gated on the live FalkorDB backend, so it is not part of the offline suite.
+// ─────────────────────────────────────────────────────────────────
+
+describe("Gate D — graph seat isolation (DEFERRED)", () => {
+  test.skip("acl_graph_no_private_crossseat_edges", () => {
+    // WHEN un-skipped (post-decision to seat-isolate the graph):
+    //   - seat_a writes private-wing content → bridge ingests episode into the palace graph
+    //   - assert NO edge/path makes that content traversable from seat_b's subgraph
+    //     (group_id / namespace boundary holds), while company content stays shared.
+    // Requires a live/stubbed FalkorDB; tracked with Gate D, not offline-gradeable here.
   });
 });

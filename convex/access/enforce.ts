@@ -297,3 +297,79 @@ const TOOL_TO_OP: Record<string, string> = {
 export function runtimeOpForTool(tool: string): string | null {
   return TOOL_TO_OP[tool] ?? null;
 }
+
+// ─── Seat isolation: per-room ownership (Phase 1 ACL) ────────────
+//
+// A room carries an optional `ownerNeopId`:
+//   - set   → PERSONAL room, owned by that seat (neopId).
+//   - unset → shared COMPANY room (all legacy rooms + admin-created).
+//
+// read-scope ⊇ write-scope (S3 §3.2.1), two SEPARATE predicates:
+//   • assertNeopScope     (WRITE) — a scoped seat may write ONLY its own room.
+//   • assertNeopReadScope (READ)  — a scoped seat may read its own room OR any
+//                                   company room; a room owned by ANOTHER seat is denied.
+//
+// IDENTITY POSTURE (Phase 1, honest-caller): neopId is the caller's DECLARED seat —
+// there is no signed per-seat credential yet (http.ts resolves `body.neopId ?? header
+// ?? _admin`). This is adequate for cooperating seats inside ONE tenant (the V2-alpha
+// threat model: prevent accidental cross-seat contamination, NOT defend against a
+// forged neopId). Cryptographic per-seat identity (signed X-NEop-Identity) is DEFERRED
+// to the multi-tenant / adversarial phase. Do not present Phase 1 isolation as
+// defense against a malicious seat that lies about its neopId.
+
+/** Minimal shape needed to decide room scope — just the ownership field. */
+export interface RoomScope {
+  ownerNeopId?: string | null;
+}
+
+/** True iff this seat owns the room (a personal room keyed to it). */
+export function ownsRoom(perms: ResolvedPermissions, room: RoomScope): boolean {
+  return !!room.ownerNeopId && room.ownerNeopId === perms.effectiveNeopId;
+}
+
+/** True iff the room is a shared company room (no owner). */
+export function isCompanyRoom(room: RoomScope): boolean {
+  return room.ownerNeopId === undefined || room.ownerNeopId === null;
+}
+
+/** READ scope: own room OR any company room. Another seat's room → false. */
+export function canReadRoom(perms: ResolvedPermissions, room: RoomScope): boolean {
+  if (perms.isAdmin) return true;
+  return ownsRoom(perms, room) || isCompanyRoom(room);
+}
+
+/** WRITE scope: own room ONLY. Company rooms are read-only for a scoped seat. */
+export function canWriteRoom(perms: ResolvedPermissions, room: RoomScope): boolean {
+  if (perms.isAdmin) return true;
+  return ownsRoom(perms, room);
+}
+
+/** Throwing WRITE guard — a scoped seat may write only its own room. */
+export function assertNeopScope(perms: ResolvedPermissions, room: RoomScope): void {
+  if (!canWriteRoom(perms, room)) {
+    const owner = room.ownerNeopId ?? "(company)";
+    throw new AccessDenied(
+      perms.neopId,
+      `cannot write to room owned by "${owner}" — writes are restricted to this seat's own room`,
+    );
+  }
+}
+
+/** Throwing READ guard — a scoped seat may read its own room or a company room. */
+export function assertNeopReadScope(perms: ResolvedPermissions, room: RoomScope): void {
+  if (!canReadRoom(perms, room)) {
+    throw new AccessDenied(
+      perms.neopId,
+      `cannot read room owned by "${room.ownerNeopId}" — not this seat's room`,
+    );
+  }
+}
+
+/** Drop rooms this seat may not read (own + company kept; other seats' dropped). */
+export function filterRoomsByReadScope<T extends RoomScope>(
+  perms: ResolvedPermissions,
+  rooms: T[],
+): T[] {
+  if (perms.isAdmin) return rooms;
+  return rooms.filter((r) => canReadRoom(perms, r));
+}

@@ -191,12 +191,21 @@ export default defineSchema({
     closetCount: v.number(),               // denormalized
     lastUpdated: v.number(),
     tags: v.array(v.string()),
+    // Seat-isolation (Phase 1 ACL). Set = PERSONAL room owned by that seat (neopId);
+    // unset/undefined = shared COMPANY room (all legacy rooms + admin-created). Additive,
+    // non-breaking: existing rows read back as company rooms. Write-scope keys on this.
+    ownerNeopId: v.optional(v.string()),
   })
     .index("by_hall", ["hallId"])
     .index("by_wing", ["wingId"])
     .index("by_palace", ["palaceId"])
     .index("by_palace_name", ["palaceId", "name"])
     .index("by_wing_name", ["wingId", "name"])
+    .index("by_palace_owner", ["palaceId", "ownerNeopId"])
+    // Owner-namespaced room resolution (Gate B-2): the same display name can exist once
+    // per owner — a seat's "stack" is distinct from the company "stack" and from another
+    // seat's "stack". ownerNeopId=undefined keys the shared COMPANY namespace (legacy rooms).
+    .index("by_palace_owner_name", ["palaceId", "ownerNeopId", "name"])
     .searchIndex("search_rooms", {
       searchField: "name",
       filterFields: ["palaceId", "wingId"],

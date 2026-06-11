@@ -192,6 +192,7 @@ export const createRoom = mutation({
     name: v.string(),
     summary: v.string(),
     tags: v.array(v.string()),
+    ownerNeopId: v.optional(v.string()),   // seat-isolation: set = personal room; unset = company
   },
   handler: async (ctx, args): Promise<Id<"rooms">> => {
     validateSlug(args.name, "room.name");
@@ -205,10 +206,12 @@ export const createRoom = mutation({
       throw new Error("wing.palaceId mismatch with provided palaceId");
     }
 
+    // Owner-namespaced dedup (Gate B-2): resolve within the caller's owner namespace so a
+    // seat's room of a given name is distinct from the company room of the same name.
     const existing = await ctx.db
       .query("rooms")
-      .withIndex("by_palace_name", (q) =>
-        q.eq("palaceId", args.palaceId).eq("name", args.name),
+      .withIndex("by_palace_owner_name", (q) =>
+        q.eq("palaceId", args.palaceId).eq("ownerNeopId", args.ownerNeopId).eq("name", args.name),
       )
       .first();
     if (existing) return existing._id;
@@ -222,6 +225,7 @@ export const createRoom = mutation({
       closetCount: 0,
       lastUpdated: Date.now(),
       tags: args.tags,
+      ...(args.ownerNeopId ? { ownerNeopId: args.ownerNeopId } : {}),
     });
 
     // Counter denormalization (atomic with insert via Convex OCC).
@@ -243,17 +247,21 @@ export const getOrCreateRoom = mutation({
     wingName: v.string(),
     roomName: v.string(),
     summary: v.optional(v.string()),
+    ownerNeopId: v.optional(v.string()),   // seat-isolation: stamp personal ownership on create
   },
   handler: async (ctx, args): Promise<Id<"rooms">> => {
     // Normalize names.
     const wn = args.wingName.toLowerCase().replace(/\s+/g, "-");
     const rn = args.roomName.toLowerCase().replace(/\s+/g, "-");
 
-    // 1. Check if room already exists by name in this palace.
+    // 1. Resolve within the caller's OWNER namespace (Gate B-2): a scoped seat's remember
+    //    lands in/creates ITS OWN room of this name; admin/scripts (ownerNeopId=undefined)
+    //    resolve the shared COMPANY namespace, exactly as before. This is what keeps a
+    //    seat's auto-routed memory from colliding into a company- or another-seat's room.
     const existing = await ctx.db
       .query("rooms")
-      .withIndex("by_palace_name", (q) =>
-        q.eq("palaceId", args.palaceId).eq("name", rn),
+      .withIndex("by_palace_owner_name", (q) =>
+        q.eq("palaceId", args.palaceId).eq("ownerNeopId", args.ownerNeopId).eq("name", rn),
       )
       .first();
     if (existing) return existing._id;
@@ -293,6 +301,7 @@ export const getOrCreateRoom = mutation({
         closetCount: 0,
         lastUpdated: Date.now(),
         tags: ["auto-created"],
+        ...(args.ownerNeopId ? { ownerNeopId: args.ownerNeopId } : {}),
       });
       await safePatchHall(ctx, hall._id, { roomCount: hall.roomCount + 1 });
       await safePatchWing(ctx, quarantine._id, {
@@ -321,6 +330,7 @@ export const getOrCreateRoom = mutation({
       closetCount: 0,
       lastUpdated: Date.now(),
       tags: ["auto-created"],
+      ...(args.ownerNeopId ? { ownerNeopId: args.ownerNeopId } : {}),
     });
     await safePatchHall(ctx, hall._id, { roomCount: hall.roomCount + 1 });
     await safePatchWing(ctx, wing._id, {
