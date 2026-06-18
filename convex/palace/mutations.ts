@@ -254,8 +254,14 @@ export const getOrCreateRoom = mutation({
     roomName: v.string(),
     summary: v.optional(v.string()),
     ownerNeopId: v.optional(v.string()),   // seat-isolation: stamp personal ownership on create
+    actorNeopId: v.optional(v.string()),   // L1 seat-scope (undefined = trusted caller; "_system" = trusted internal)
   },
   handler: async (ctx, args): Promise<Id<"rooms">> => {
+    // L1 SoT-side write-scope (defense in depth): a scoped seat may only resolve/create
+    // a room in its OWN (or the company) namespace. undefined/"_system"/"_admin" bypass
+    // (trusted internal + admin). The room being resolved/created is owned by ownerNeopId.
+    assertActorCanWriteRoom(args.actorNeopId, { ownerNeopId: args.ownerNeopId });
+
     // Normalize names.
     const wn = args.wingName.toLowerCase().replace(/\s+/g, "-");
     const rn = args.roomName.toLowerCase().replace(/\s+/g, "-");

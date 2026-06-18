@@ -22,7 +22,7 @@ import { scanForPII } from "./pii.js";
 import { routeToWing, routeToRoom, classifyCategory, scoreConfidence } from "./route.js";
 import { embedOne, EMBEDDING_MODEL } from "../lib/qwen.js";
 import { callGeminiLlm } from "../lib/geminiLlm.js";
-import { CATEGORIES } from "../lib/enums.js";
+import { CATEGORIES, SYSTEM_NEOP_ID } from "../lib/enums.js";
 import { EXTRACTION_SYSTEM_PROMPT, parseExtractionResponse, type ExtractionItem } from "./extract.js";
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -131,6 +131,7 @@ export const ingestExchange = action({
             roomName: item.room,
             summary: item.title,
             ownerNeopId: args.ownerNeopId,   // seat-isolation: route to the caller's namespace
+            actorNeopId: SYSTEM_NEOP_ID,     // trusted internal pipeline (elevated, audited)
           },
         );
 
@@ -152,6 +153,7 @@ export const ingestExchange = action({
             confidence: item.confidence,
             piiTags,
             needsReview: item.wing === "_quarantine" || extractionFailed,
+            actorNeopId: SYSTEM_NEOP_ID,     // trusted internal pipeline (elevated, audited)
           },
         );
 
@@ -169,6 +171,7 @@ export const ingestExchange = action({
               fact,
               validFrom: args.timestamp,
               confidence: item.confidence,
+              actorNeopId: SYSTEM_NEOP_ID,   // trusted internal pipeline (elevated, audited)
             });
             drawersCreated++;
           } catch (e) {

@@ -15,7 +15,7 @@
 //   - Scope bindings block conflicting filters (not just inject defaults)
 
 import type { Id, Doc } from "../_generated/dataModel.js";
-import { ADMIN_NEOP_ID } from "../lib/enums.js";
+import { ADMIN_NEOP_ID, SYSTEM_NEOP_ID } from "../lib/enums.js";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -383,10 +383,21 @@ export function filterRoomsByReadScope<T extends RoomScope>(
 // that forgets to guard).
 //
 // Semantics of `actorNeopId`:
-//   • undefined → TRUSTED internal caller (crons, ingestion pipeline, admin scripts):
-//       no check. Preserves the bare-mutation contract these paths rely on.
+//   • undefined → TRUSTED internal caller: no check. *** PHASE A (current) ***
+//       This is the LEGACY fail-OPEN contract. It flips to DENY in PHASE B once every
+//       internal write path passes an explicit actor and the completeness guard
+//       (tests/actor_coverage.test.ts) is green. DO NOT rely on undefined for new code —
+//       trusted internal paths must pass SYSTEM_NEOP_ID ("_system") instead.
+//   • "_system" → TRUSTED internal actor (crons, ingestion pipeline, seed scripts): no
+//       check. An ELEVATED identity, never derivable from request input, always audited.
+//       Same family as "_admin". This is the EXPLICIT, Phase-B-safe form of the trusted
+//       internal caller — it survives the undefined⇒DENY flip.
 //   • "_admin"  → bypass.
 //   • a seat    → must own the room to write; may read own + company rooms.
+//
+// PHASE A is ADDITIVE: undefined is STILL trusted; "_system" is allowed ALONGSIDE it. No
+// existing caller changes behavior. PHASE B (the breaking flip: undefined ⇒ DENY) is gated
+// on the completeness guard proving zero remaining undefined-relying internal callers.
 //
 // HONEST-CALLER posture (same as the rest of Phase 1): `actorNeopId` is DECLARED by the
 // caller, not cryptographically authenticated. A malicious direct caller could omit it;
@@ -397,8 +408,9 @@ export function assertActorCanWriteRoom(
   actorNeopId: string | undefined,
   room: RoomScope,
 ): void {
-  if (actorNeopId === undefined) return;       // trusted internal caller
-  if (actorNeopId === ADMIN_NEOP_ID) return;   // admin bypass
+  if (actorNeopId === undefined) return;        // Phase A: still trusted (flips to DENY in Phase B)
+  if (actorNeopId === SYSTEM_NEOP_ID) return;   // trusted internal actor (elevated)
+  if (actorNeopId === ADMIN_NEOP_ID) return;    // admin bypass
   if (!(room.ownerNeopId && room.ownerNeopId === actorNeopId)) {
     throw new AccessDenied(
       actorNeopId,
@@ -411,8 +423,9 @@ export function assertActorCanReadRoom(
   actorNeopId: string | undefined,
   room: RoomScope,
 ): void {
-  if (actorNeopId === undefined) return;
-  if (actorNeopId === ADMIN_NEOP_ID) return;
+  if (actorNeopId === undefined) return;        // Phase A: still trusted (flips to DENY in Phase B)
+  if (actorNeopId === SYSTEM_NEOP_ID) return;   // trusted internal actor (elevated)
+  if (actorNeopId === ADMIN_NEOP_ID) return;    // admin bypass
   const own = !!room.ownerNeopId && room.ownerNeopId === actorNeopId;
   const company = room.ownerNeopId === undefined || room.ownerNeopId === null;
   if (!(own || company)) {

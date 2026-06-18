@@ -233,6 +233,7 @@ async function main() {
               wingName: wing,
               roomName: room,
               summary: `${folder}/${file}`,
+              actorNeopId: "_system", // trusted internal import script (elevated, audited)
             },
           );
 
@@ -250,6 +251,7 @@ async function main() {
               authorType: "system",
               authorId: "archive-import",
               confidence: 0.9,
+              actorNeopId: "_system", // trusted internal import script (elevated, audited)
             } as any,
           );
 
@@ -268,6 +270,7 @@ async function main() {
               fact,
               validFrom: Date.now(),
               confidence: 0.85,
+              actorNeopId: "_system", // trusted internal import script (elevated, audited)
             });
           }
 
