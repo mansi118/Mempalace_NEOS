@@ -28,11 +28,12 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import structlog
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from config import BridgeConfig, PalaceRegistry
+from bridge_identity import verify_tenant_scope
 
 # ── Logging ──────────────────────────────────────────────────────
 
@@ -50,6 +51,19 @@ logger = structlog.get_logger("graphiti_bridge")
 
 cfg = BridgeConfig.from_env()
 registry = PalaceRegistry.load()
+
+
+def _enforce_identity(palace_id: str, request: Request) -> None:
+    """L2 (P2): when identity_enabled, require an X-NEop-Identity whose tenant owns palace_id;
+    refuse cross-tenant/missing and emit denied_at_layer=falkordb (the slot was plumbed-but-silent).
+    Default-off → no behaviour change until BRIDGE_IDENTITY_ENABLED is set."""
+    if not cfg.identity_enabled:
+        return
+    ok, denial = verify_tenant_scope(palace_id, request.headers.get("X-NEop-Identity"), registry)
+    if not ok:
+        logger.warning("falkordb_denied", **denial)
+        # Best-effort live emit to the unified audit (Convex recordExternalDenial) = the wiring/⛔ step.
+        raise HTTPException(status_code=403, detail=denial)
 
 # Graphiti client pool: palace_id → Graphiti instance.
 # Bounded by cfg.max_clients.
