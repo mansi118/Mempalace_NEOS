@@ -540,3 +540,53 @@ describe("Gate B-2 — owner-namespaced room resolution", () => {
     expect(rs!.ownerNeopId).toBe("seat_a");
   });
 });
+
+// ─────────────────────────────────────────────────────────────────
+// #4 — GDPR erasure cascade: retract must also redact the closet's drawers
+// (same PII) and write a traceable audit event. Erasure that leaves the facts
+// or isn't auditable is a compliance hole.
+// ─────────────────────────────────────────────────────────────────
+
+describe("#4 — retract erasure cascade + audit", () => {
+  test("retract redacts + invalidates the closet's drawers and writes an audited erasure event", async () => {
+    const t = convexTest(schema);
+    const { palaceId, roomId } = await makePalace(t);
+    const r = await t.mutation(api.palace.mutations.createCloset, baseClosetArgs(palaceId, roomId) as any);
+    await t.mutation(api.palace.mutations.createDrawer, {
+      closetId: r.closetId, palaceId, fact: "sensitive PII fact", validFrom: 1, confidence: 0.9,
+    });
+
+    const res = await t.mutation(api.palace.mutations.retractCloset, {
+      closetId: r.closetId, reason: "GDPR erase", retractedBy: "_admin",
+    });
+    expect(res.drawersRedacted).toBe(1);
+
+    // The drawer's fact is unrecoverable AND marked invalid.
+    const drawers = await t.query(api.palace.queries.listDrawers, { closetId: r.closetId });
+    expect(drawers.length).toBe(1);
+    expect(drawers[0]!.fact).toBe("[REDACTED]");
+    expect(drawers[0]!.validUntil).toBeDefined();
+
+    // A traceable erasure audit row exists with the cascade specifics.
+    const audits = await t.run(async (ctx: any) =>
+      ctx.db.query("audit_events").withIndex("by_palace", (q: any) => q.eq("palaceId", palaceId)).collect());
+    const erase = audits.find((a: any) => a.op === "retract" && a.itemId === r.closetId);
+    expect(erase, "an op=retract audit_event must be written for the closet").toBeDefined();
+    const extra = JSON.parse(erase.extra);
+    expect(extra.drawersRedacted).toBe(1);
+    expect(extra.contentRedacted).toBe(true);
+  });
+
+  test("retract with no drawers still writes an audit event (drawersRedacted=0)", async () => {
+    const t = convexTest(schema);
+    const { palaceId, roomId } = await makePalace(t);
+    const r = await t.mutation(api.palace.mutations.createCloset, baseClosetArgs(palaceId, roomId) as any);
+    const res = await t.mutation(api.palace.mutations.retractCloset, {
+      closetId: r.closetId, reason: "x", retractedBy: "_admin",
+    });
+    expect(res.drawersRedacted).toBe(0);
+    const audits = await t.run(async (ctx: any) =>
+      ctx.db.query("audit_events").withIndex("by_palace", (q: any) => q.eq("palaceId", palaceId)).collect());
+    expect(audits.some((a: any) => a.op === "retract" && a.itemId === r.closetId)).toBe(true);
+  });
+});
