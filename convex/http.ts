@@ -160,6 +160,53 @@ http.route({
   }),
 });
 
+// ─── External denial sink (P2: out-of-Convex layers → unified audit) ──────────
+// Least-privilege ingress so layers that live OUTSIDE Convex (the FalkorDB bridge L2, edge) can
+// record a denial into the unified audit (denied_at_layer) — feeding denialsByLayer so the Day-90
+// instrument counts EVERY layer, not just the in-Convex ones. Authenticated by a SHARED service
+// secret (PALACE_BRIDGE_API_KEY), NOT the admin key. Default-OFF: if the secret is unset the route
+// is disabled (503) so it can never be an open audit-spam vector. Best-effort by contract — the
+// caller (the bridge) treats any failure as non-fatal; the client already got its 403.
+http.route({
+  path: "/external-denial",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const secret = process.env.PALACE_BRIDGE_API_KEY;
+    if (!secret) return jsonResponse({ error: "denial_sink_disabled" }, 503);
+    if (request.headers.get("X-Palace-Key") !== secret)
+      return jsonResponse({ error: "unauthorized" }, 401);
+    let body: {
+      palaceId: string;
+      deniedAtLayer: "edge" | "broker" | "falkordb";
+      neopId?: string;
+      op?: string;
+      reason: string;
+      extra?: string;
+    };
+    try {
+      body = await request.json();
+    } catch {
+      return jsonResponse({ error: "invalid_json" }, 400);
+    }
+    if (!body?.palaceId || !body?.deniedAtLayer || !body?.reason)
+      return jsonResponse({ error: "missing palaceId/deniedAtLayer/reason" }, 400);
+    try {
+      const res = await ctx.runMutation(api.access.mutations.recordExternalDenial, {
+        palaceId: body.palaceId as Id<"palaces">,
+        deniedAtLayer: body.deniedAtLayer,
+        neopId: body.neopId,
+        op: body.op,
+        reason: body.reason,
+        extra: body.extra,
+      });
+      return jsonResponse(res);
+    } catch (e) {
+      // A bad palaceId etc. must not 500 a best-effort emit — surface a typed 400.
+      return jsonResponse({ error: "record_failed", detail: String(e) }, 400);
+    }
+  }),
+});
+
 // ─── Seat-isolation helpers (Gate B) ────────────────────────────
 // Resolve the owning room for an addressed entity, then the caller applies the
 // pure scope guard (assertNeopScope / assertNeopReadScope). Used by non-admin

@@ -32,6 +32,7 @@ class BridgeConfig:
     request_timeout: int = 60
     env: str = "production"
     identity_enabled: bool = False   # L2: require X-NEop-Identity tenant-scope (default off)
+    denial_sink_url: str = ""        # P2: Convex base URL for the external-denial emit ("" => off)
 
     @classmethod
     def from_env(cls) -> "BridgeConfig":
@@ -49,6 +50,7 @@ class BridgeConfig:
             request_timeout=int(os.environ.get("BRIDGE_REQUEST_TIMEOUT", "60")),
             env=os.environ.get("BRIDGE_ENV", "production"),
             identity_enabled=os.environ.get("BRIDGE_IDENTITY_ENABLED", "").lower() in ("1", "true", "yes"),
+            denial_sink_url=os.environ.get("CONVEX_DENIAL_SINK_URL", "").rstrip("/"),
         )
 
     @property
