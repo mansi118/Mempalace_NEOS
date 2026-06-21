@@ -7,6 +7,7 @@
 import { query, internalQuery } from "../_generated/server.js";
 import { v } from "convex/values";
 import type { Id, Doc } from "../_generated/dataModel.js";
+import { embedderConfigured, EMBEDDER_PROVIDER, EMBEDDER_ENV_KEY } from "../lib/qwen.js";
 
 // ─── PALACES ─────────────────────────────────────────────────
 
@@ -502,5 +503,39 @@ export const getStats = query({
       drawers: { total: drawers.length, valid: validDrawers.length },
       tunnels: tunnels.length,
     };
+  },
+});
+
+// #6 — embedding health. Retrieval is the product, but a missing/blocked embedder fails
+// SILENTLY (embedOne throws → embeddingStatus="failed" → vector search returns nothing, no
+// loud error). This surfaces it: per-status counts + whether the embedder credential is set
+// in the Convex deployment env + a `degraded` verdict, so palace_status (called at session
+// start) shows it instead of an operator discovering empty search results.
+export const embeddingHealth = query({
+  args: { palaceId: v.id("palaces") },
+  handler: async (ctx, { palaceId }) => {
+    const counts = { pending: 0, generated: 0, failed: 0 };
+    for (const status of ["pending", "generated", "failed"] as const) {
+      const rows = await ctx.db
+        .query("closets")
+        .withIndex("by_embedding_status", (q) =>
+          q.eq("palaceId", palaceId).eq("embeddingStatus", status),
+        )
+        .collect();
+      counts[status] = rows.filter((c) => !c.retracted).length;
+    }
+    const total = counts.pending + counts.generated + counts.failed;
+    const configured = embedderConfigured();
+    // Degraded iff: no embedder credential, OR closets exist but none embedded, OR any failed.
+    const degraded = !configured || (total > 0 && counts.generated === 0) || counts.failed > 0;
+    const reason = !configured
+      ? `embedder credential absent — set ${EMBEDDER_ENV_KEY} in the Convex deployment env ` +
+        `(provider=${EMBEDDER_PROVIDER}); until then every write fails to embed and retrieval is blind`
+      : counts.failed > 0
+        ? `${counts.failed} closet(s) failed to embed — vector retrieval is degraded`
+        : total > 0 && counts.generated === 0
+          ? `${total} closet(s) but none embedded yet — retrieval will return nothing`
+          : "ok";
+    return { provider: EMBEDDER_PROVIDER, configured, counts, total, degraded, reason };
   },
 });

@@ -278,15 +278,19 @@ async function dispatch(
 
     // ── NAVIGATION ────────────────────────────────────────
     case "palace_status": {
-      const [l0, l1, stats] = await Promise.all([
+      const [l0, l1, stats, embedding] = await Promise.all([
         ctx.runQuery(api.serving.l0l1.getL0, { palaceId }),
         ctx.runQuery(api.serving.l0l1.getL1, { palaceId }),
         ctx.runQuery(api.palace.queries.getStats, { palaceId }),
+        // #6: embedding health at session start — a blocked/missing embedder degrades
+        // retrieval silently, so surface it loudly here rather than via empty search.
+        ctx.runQuery(api.palace.queries.embeddingHealth, { palaceId }),
       ]);
       return {
         l0: l0 ?? "Palace identity not generated. Run seed:palace first.",
         l1: l1 ?? "Wing index not generated.",
         stats,
+        embedding,
         protocol: PALACE_PROTOCOL,
         neop: { id: neopId, scope: perms.scopeWing ? `${perms.scopeWing}/${perms.scopeRoom ?? "*"}` : "unrestricted" },
       };
