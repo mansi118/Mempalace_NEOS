@@ -19,6 +19,7 @@ import { ADMIN_NEOP_ID } from "./lib/enums.js";
 import {
   type ResolvedPermissions,
   resolvePermissions,
+  identityOnlyPerms,
   enforceRuntimeOp,
   enforceScope,
   enforceWrite,
@@ -83,11 +84,18 @@ http.route({
 
     try {
       // ── Phase 7: Access control gate ────────────────────
-      // Resolve permissions via a mutation (has db access).
-      const perms: ResolvedPermissions = await ctx.runQuery(
-        internal.access.queries.resolvePermsQuery,
-        { palaceId: pid, neopId },
-      );
+      // B2 (docs/decisions/twin-keying.md): the twin is IDENTITY, not memory. Own-twin access needs a
+      // valid identity, NOT a neop_permissions row — so twin ops resolve to identity-only perms and skip
+      // the unknown-neopId throw in resolvePermissions. They are ungated (no runtime op); the exact
+      // own-twin bound is getTwin/putTwin's `q.eq("neopId", neopId)` over the server-derived neopId.
+      // Every other tool resolves perms normally (throws on unknown seat) and is op-gated as before.
+      const isTwinTool = tool === "palace_get_twin" || tool === "palace_put_twin";
+      const perms: ResolvedPermissions = isTwinTool
+        ? identityOnlyPerms(neopId)
+        : await ctx.runQuery(internal.access.queries.resolvePermsQuery, {
+            palaceId: pid,
+            neopId,
+          });
 
       // Check runtime op.
       const requiredOp = runtimeOpForTool(tool);

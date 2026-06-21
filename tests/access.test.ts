@@ -346,6 +346,16 @@ describe("Tool to runtime op mapping", () => {
   test("unknown tool returns null", () => {
     expect(runtimeOpForTool("nonexistent_tool")).toBeNull();
   });
+
+  // B2 (docs/decisions/twin-keying.md): twin is IDENTITY, not memory — own-twin access is NOT gated by
+  // a memory op. getTwin/putTwin key by an exact server-derived neopId; isolation rests on that, not on
+  // recall/remember. paused_run ops (memory-like) stay gated, proving the carve-out is twin-specific.
+  test("twin ops are NOT memory-gated (B2 identity self-access)", () => {
+    expect(runtimeOpForTool("palace_get_twin")).toBeNull();
+    expect(runtimeOpForTool("palace_put_twin")).toBeNull();
+    expect(runtimeOpForTool("palace_get_paused_run")).toBe("recall");
+    expect(runtimeOpForTool("palace_save_paused_run")).toBe("remember");
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────
