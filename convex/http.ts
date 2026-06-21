@@ -135,6 +135,8 @@ http.route({
           status: isDenied ? "denied" : "error",
           latencyMs,
           extra: JSON.stringify({ tool, error: msg.slice(0, 200) }),
+          // #12: a denial AT the Convex dispatch/SoT is attributed to convex_sot.
+          deniedAtLayer: isDenied ? "convex_sot" : undefined,
         });
       } catch (auditErr) { console.error("[audit] write failed:", auditErr); }
 

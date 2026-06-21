@@ -127,6 +127,16 @@ const auditStatus = v.union(
   v.literal("denied"),
 );
 
+// Which enforcement layer denied an op (#12). Unifies the denial signal across the stack so
+// the Day-90 "isolation holds" bar is measurable: edge-auth → "edge", NEOS broker → "broker",
+// Convex SoT dispatch/mutations → "convex_sot", FalkorDB bridge → "falkordb".
+const deniedAtLayer = v.union(
+  v.literal("edge"),
+  v.literal("broker"),
+  v.literal("convex_sot"),
+  v.literal("falkordb"),
+);
+
 const ingestionStatus = v.union(
   v.literal("pending"),
   v.literal("extracted"),
@@ -421,6 +431,7 @@ export default defineSchema({
     resultCount: v.optional(v.number()),
     queryHash: v.optional(v.string()),
     extra: v.optional(v.string()),         // JSON blob
+    denied_at_layer: v.optional(deniedAtLayer),   // #12: which layer denied (when status=denied)
   })
     .index("by_palace", ["palaceId"])
     .index("by_palace_time", ["palaceId", "timestamp"])
