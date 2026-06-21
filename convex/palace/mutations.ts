@@ -551,12 +551,49 @@ export const retractCloset = mutation({
       });
     }
 
-    // Audit trail (caller should also write an explicit audit_event with op=retract).
+    // ── GDPR cascade (#4): the closet's atomic facts (drawers) carry the same PII
+    // as the closet — redact + invalidate them too, or erasure is incomplete. Scoped
+    // to THIS closet's drawers. The closet's legalHold (checked above) gates the cascade.
+    const drawers = await ctx.db
+      .query("drawers")
+      .withIndex("by_closet", (q) => q.eq("closetId", closetId))
+      .collect();
+    const erasedAt = Date.now();
+    const graphitiPending: string[] = [];
+    for (const d of drawers) {
+      if (d.graphitiNodeId) graphitiPending.push(d.graphitiNodeId);
+      await ctx.db.patch(d._id, { fact: "[REDACTED]", validUntil: erasedAt });
+    }
+
+    // Audited erasure event (#4; threaded into audit_events, the sink #12 will unify):
+    // erasure that isn't traceable is its own compliance hole. graphitiPendingDeletion
+    // records the cross-service (FalkorDB) nodes still to remove — that path is gap #5,
+    // not yet wired, so this leaves a durable to-do trail instead of a silent omission.
+    await ctx.db.insert("audit_events", {
+      palaceId: closet.palaceId,
+      op: "retract",
+      neopId: retractedBy,
+      effectiveNeopId: actorNeopId ?? retractedBy,
+      status: "ok",
+      latencyMs: 0,
+      timestamp: erasedAt,
+      itemId: closetId,
+      extra: JSON.stringify({
+        action: "retract_cascade",
+        reason: reason.slice(0, 200),
+        contentRedacted: true,
+        embeddingDeleted: !!emb,
+        drawersRedacted: drawers.length,
+        graphitiPendingDeletion: graphitiPending,
+      }),
+    });
+
     return {
       status: "ok" as const,
       closetId,
       reason: reason.slice(0, 200),
       retractedBy,
+      drawersRedacted: drawers.length,
     };
   },
 });
