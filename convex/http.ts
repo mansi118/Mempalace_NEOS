@@ -439,6 +439,7 @@ async function dispatch(
         roomName: params.roomName as string,
         summary: params.summary as string | undefined,
         ownerNeopId: perms.isAdmin ? undefined : perms.effectiveNeopId,
+        actorNeopId, // L1 SoT write-scope: a scoped seat may only create in its OWN namespace (admin ⇒ undefined ⇒ bypass)
       });
 
     case "palace_create_tunnel": {

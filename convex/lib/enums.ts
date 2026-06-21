@@ -92,6 +92,12 @@ export const KG_BACKED_CATEGORIES = new Set<Category>([
 
 export const ADMIN_NEOP_ID = "_admin";
 
+// Trusted-internal actor (crons / ingestion pipeline / seed scripts).
+// An ELEVATED identity: never derivable from request input, always audited.
+// Same family as `_admin`. Used as the write-guard actor for trusted internal
+// write paths so they remain explicit (and survive the Phase-B undefined⇒DENY flip).
+export const SYSTEM_NEOP_ID = "_system";
+
 // ───── Convex document size guard ─────
 
 // Convex enforces a 1MB document limit. Leave headroom for metadata.

@@ -75,6 +75,7 @@ async function main() {
         relationship: relationship as any,
         strength,
         label: `${fromWing}/${fromRoom} → ${toWing}/${toRoom}`,
+        actorNeopId: "_system", // trusted internal seed script (elevated, audited)
       });
       console.log(`  OK: ${fromWing}/${fromRoom} → ${toWing}/${toRoom} (${relationship}, ${strength})`);
       created++;
