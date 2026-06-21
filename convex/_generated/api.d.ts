@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as access_bindings from "../access/bindings.js";
 import type * as access_enforce from "../access/enforce.js";
 import type * as access_mutations from "../access/mutations.js";
 import type * as access_queries from "../access/queries.js";
@@ -38,6 +39,7 @@ import type * as migrations_runner from "../migrations/runner.js";
 import type * as palace_mutations from "../palace/mutations.js";
 import type * as palace_provision from "../palace/provision.js";
 import type * as palace_queries from "../palace/queries.js";
+import type * as palace_twins from "../palace/twins.js";
 import type * as serving_assemble from "../serving/assemble.js";
 import type * as serving_enrich from "../serving/enrich.js";
 import type * as serving_export from "../serving/export.js";
@@ -55,6 +57,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "access/bindings": typeof access_bindings;
   "access/enforce": typeof access_enforce;
   "access/mutations": typeof access_mutations;
   "access/queries": typeof access_queries;
@@ -85,6 +88,7 @@ declare const fullApi: ApiFromModules<{
   "palace/mutations": typeof palace_mutations;
   "palace/provision": typeof palace_provision;
   "palace/queries": typeof palace_queries;
+  "palace/twins": typeof palace_twins;
   "serving/assemble": typeof serving_assemble;
   "serving/enrich": typeof serving_enrich;
   "serving/export": typeof serving_export;
