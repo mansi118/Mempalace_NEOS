@@ -498,10 +498,10 @@ describe("Gate B-2 — owner-namespaced room resolution", () => {
     const { palaceId } = await makePalace(t);
 
     const a1 = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_a",
+      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_a", actorNeopId: "_system",
     });
     const b1 = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_b",
+      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_b", actorNeopId: "_system",
     });
     expect(a1).not.toEqual(b1);
 
@@ -512,7 +512,7 @@ describe("Gate B-2 — owner-namespaced room resolution", () => {
 
     // Idempotent WITHIN an owner namespace.
     const a2 = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_a",
+      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_a", actorNeopId: "_system",
     });
     expect(a2).toEqual(a1);
   });
@@ -523,16 +523,16 @@ describe("Gate B-2 — owner-namespaced room resolution", () => {
 
     // Company namespace (admin / bulk-ingest path: no owner) — stable on repeat.
     const company = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "shared-topic",
+      palaceId, wingName: "platform", roomName: "shared-topic", actorNeopId: "_system",
     });
     const companyAgain = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "shared-topic",
+      palaceId, wingName: "platform", roomName: "shared-topic", actorNeopId: "_system",
     });
     expect(companyAgain).toEqual(company);
 
     // A scoped seat gets its OWN room, not the company one.
     const seat = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "shared-topic", ownerNeopId: "seat_a",
+      palaceId, wingName: "platform", roomName: "shared-topic", ownerNeopId: "seat_a", actorNeopId: "_system",
     });
     expect(seat).not.toEqual(company);
 
@@ -598,7 +598,7 @@ describe("#4 — retract erasure cascade + audit", () => {
     const { palaceId, roomId } = await makePalace(t);
     const r = await t.mutation(api.palace.mutations.createCloset, baseClosetArgs(palaceId, roomId) as any);
     await t.mutation(api.palace.mutations.createDrawer, {
-      closetId: r.closetId, palaceId, fact: "sensitive PII fact", validFrom: 1, confidence: 0.9,
+      closetId: r.closetId, palaceId, fact: "sensitive PII fact", validFrom: 1, confidence: 0.9, actorNeopId: "_system",
     });
 
     const res = await t.mutation(api.palace.mutations.retractCloset, {
