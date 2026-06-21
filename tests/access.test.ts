@@ -635,3 +635,55 @@ describe("Gate D — graph seat isolation (DEFERRED)", () => {
     // Requires a live/stubbed FalkorDB; tracked with Gate D, not offline-gradeable here.
   });
 });
+
+// ─────────────────────────────────────────────────────────────────
+// #12 — denied_at_layer unified into audit_events (the Day-90 measurement sink).
+// A SoT dispatch denial self-tags convex_sot; edge/broker denials push in via
+// recordExternalDenial; denialsByLayer is the instrument that counts them.
+// ─────────────────────────────────────────────────────────────────
+
+describe("#12 — denied_at_layer unified audit + measurement", () => {
+  test("a SoT /mcp denial is tagged convex_sot and counted by denialsByLayer", async () => {
+    const { t, palaceId, roomB } = await setupSeatPalace();
+    const { status } = await call(t, "palace_add_closet",
+      { roomId: roomB, content: "x", category: "decision" }, "seat_a", palaceId);
+    expect(status).toBe(403);
+
+    const counts = await t.query(api.access.queries.denialsByLayer, { palaceId });
+    expect(counts.byLayer.convex_sot).toBeGreaterThanOrEqual(1);
+    expect(counts.total).toBeGreaterThanOrEqual(1);
+
+    // The raw audit row carries the layer tag.
+    const rows = await t.run(async (ctx: any) =>
+      ctx.db.query("audit_events").withIndex("by_palace_status",
+        (q: any) => q.eq("palaceId", palaceId).eq("status", "denied")).collect());
+    expect(rows.some((r: any) => r.denied_at_layer === "convex_sot")).toBe(true);
+  });
+
+  test("recordExternalDenial unifies edge + broker denials into the same sink", async () => {
+    const { t, palaceId } = await setupSeatPalace();
+    await t.mutation(api.access.mutations.recordExternalDenial, {
+      palaceId, deniedAtLayer: "edge", neopId: "@evil:x", reason: "reserved_identity_claimed_from_channel",
+    });
+    await t.mutation(api.access.mutations.recordExternalDenial, {
+      palaceId, deniedAtLayer: "broker", neopId: "unknown", reason: "blank_identity",
+    });
+    const counts = await t.query(api.access.queries.denialsByLayer, { palaceId });
+    expect(counts.byLayer.edge).toBe(1);
+    expect(counts.byLayer.broker).toBe(1);
+    expect(counts.total).toBe(2);
+  });
+
+  test("denialsByLayer respects the sinceMs window", async () => {
+    const { t, palaceId } = await setupSeatPalace();
+    await t.mutation(api.access.mutations.recordExternalDenial, {
+      palaceId, deniedAtLayer: "edge", reason: "x",
+    });
+    const future = await t.query(api.access.queries.denialsByLayer, {
+      palaceId, sinceMs: Date.now() + 60_000,
+    });
+    expect(future.total).toBe(0);
+    const all = await t.query(api.access.queries.denialsByLayer, { palaceId });
+    expect(all.total).toBeGreaterThanOrEqual(1);
+  });
+});
