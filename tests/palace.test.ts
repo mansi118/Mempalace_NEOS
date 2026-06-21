@@ -69,6 +69,7 @@ const baseClosetArgs = (palaceId: string, roomId: string, overrides: Record<stri
   authorType: "adapter",
   authorId: "claude-export",
   confidence: 0.8,
+  actorNeopId: "_system",   // Phase B: tests act as a trusted internal seeder
   ...overrides,
 });
 
