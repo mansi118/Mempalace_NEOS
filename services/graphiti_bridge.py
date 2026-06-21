@@ -739,8 +739,9 @@ async def list_palaces():
 
 
 @app.get("/stats/{palace_id}")
-async def graph_stats(palace_id: str):
+async def graph_stats(palace_id: str, request: Request):
     """Entity and edge counts for a palace's graph."""
+    _enforce_identity(palace_id, request)
     graph_name = registry.graph_for(palace_id)
     if not graph_name:
         return JSONResponse(
