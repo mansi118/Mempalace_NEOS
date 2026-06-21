@@ -408,7 +408,13 @@ export function assertActorCanWriteRoom(
   actorNeopId: string | undefined,
   room: RoomScope,
 ): void {
-  if (actorNeopId === undefined) return;        // Phase A: still trusted (flips to DENY in Phase B)
+  // Phase B (FAIL-CLOSED): omission no longer means trust. A server-minted caller MUST pass an
+  // explicit actor — `_system` for trusted internal paths, `_admin` for admin, or a seat. This is
+  // safe because #2 made the dispatch thread `_admin` (never undefined) and the actor_coverage guard
+  // proves no source call site omits the actor; the flip only denies a direct call that omits it.
+  if (actorNeopId === undefined) {
+    throw new AccessDenied("(unspecified)", "SoT fail-closed: a guarded write requires an explicit actorNeopId");
+  }
   if (actorNeopId === SYSTEM_NEOP_ID) return;   // trusted internal actor (elevated)
   if (actorNeopId === ADMIN_NEOP_ID) return;    // admin bypass
   if (!(room.ownerNeopId && room.ownerNeopId === actorNeopId)) {
@@ -423,7 +429,10 @@ export function assertActorCanReadRoom(
   actorNeopId: string | undefined,
   room: RoomScope,
 ): void {
-  if (actorNeopId === undefined) return;        // Phase A: still trusted (flips to DENY in Phase B)
+  // Phase B (FAIL-CLOSED) — see assertActorCanWriteRoom. Omission no longer means trust.
+  if (actorNeopId === undefined) {
+    throw new AccessDenied("(unspecified)", "SoT fail-closed: a guarded read requires an explicit actorNeopId");
+  }
   if (actorNeopId === SYSTEM_NEOP_ID) return;   // trusted internal actor (elevated)
   if (actorNeopId === ADMIN_NEOP_ID) return;    // admin bypass
   const own = !!room.ownerNeopId && room.ownerNeopId === actorNeopId;
