@@ -19,7 +19,7 @@ if (!url) { console.error("CONVEX_URL not set"); process.exit(1); }
 const client = new ConvexHttpClient(url);
 
 // Tunnel definitions: [fromWing/fromRoom, toWing/toRoom, relationship, strength]
-const TUNNEL_DEFS: Array<[string, string, string, string, number]> = [
+const TUNNEL_DEFS: Array<[string, string, string, string, string, number]> = [
   // Clients ↔ Platform
   ["clients", "zoo-media", "platform", "neop-catalog", "depends_on", 0.9],
   ["clients", "zoo-media", "marketplace", "neps", "references", 0.7],
