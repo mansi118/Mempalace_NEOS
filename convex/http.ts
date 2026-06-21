@@ -15,6 +15,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server.js";
 import { api, internal } from "./_generated/api.js";
 import type { Id } from "./_generated/dataModel.js";
+import { ADMIN_NEOP_ID } from "./lib/enums.js";
 import {
   type ResolvedPermissions,
   resolvePermissions,
@@ -199,9 +200,12 @@ async function dispatch(
   const palaceId = params.palaceId as Id<"palaces">;
   const neopId = params.neopId as string;
   const perms = params._perms as ResolvedPermissions;
-  // L1 defense-in-depth: the caller seat threaded into room-mutating mutations so the
-  // SoT enforces seat-scope independently of these dispatch guards (admin → undefined = trusted).
-  const actorNeopId = perms.isAdmin ? undefined : perms.effectiveNeopId;
+  // L1 defense-in-depth: the caller seat threaded into room-mutating mutations so the SoT
+  // enforces seat-scope independently of these dispatch guards. SERVER-DERIVED only (from the
+  // resolved perms — never from request input). Admin threads the explicit ADMIN_NEOP_ID, NOT
+  // `undefined`: the S0.3 Phase-B flip makes `undefined ⇒ DENY`, and threading undefined for
+  // admin would deny every admin write. The actor here is provably non-undefined.
+  const actorNeopId: string = perms.isAdmin ? ADMIN_NEOP_ID : perms.effectiveNeopId;
 
   switch (tool) {
     // ── RECALL ────────────────────────────────────────────
