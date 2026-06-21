@@ -19,10 +19,12 @@ Design notes (from ultrathink analysis):
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import sys
 import time
+import urllib.request
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Optional
@@ -62,8 +64,33 @@ def _enforce_identity(palace_id: str, request: Request) -> None:
     ok, denial = verify_tenant_scope(palace_id, request.headers.get("X-NEop-Identity"), registry)
     if not ok:
         logger.warning("falkordb_denied", **denial)
-        # Best-effort live emit to the unified audit (Convex recordExternalDenial) = the wiring/⛔ step.
+        _emit_external_denial(palace_id, denial)   # best-effort unified-audit emit (P2)
         raise HTTPException(status_code=403, detail=denial)
+
+
+def _emit_external_denial(palace_id: str, denial: dict) -> None:
+    """Best-effort: record an L2 denial into the unified Convex audit (denied_at_layer=falkordb) so
+    `denialsByLayer` counts the bridge layer, not just the in-Convex ones. Credential-gated
+    (cfg.denial_sink_url) + offline-safe: ANY failure is logged and swallowed — the client already
+    got its 403, so the emit must never block, delay, or raise. POSTs to the least-privilege
+    /external-denial sink with the shared bridge key; the sink is itself default-off server-side."""
+    if not cfg.denial_sink_url:
+        return
+    try:
+        body = json.dumps({
+            "palaceId": denial.get("palace_id", palace_id),
+            "deniedAtLayer": denial.get("denied_at_layer", "falkordb"),
+            "neopId": denial.get("claimed_seat") or denial.get("claimed_tenant"),
+            "reason": denial.get("reason", "tenant_scope_denied"),
+            "extra": json.dumps(denial, sort_keys=True),
+        }).encode()
+        req = urllib.request.Request(
+            f"{cfg.denial_sink_url}/external-denial", data=body,
+            headers={"Content-Type": "application/json", "X-Palace-Key": cfg.api_key},
+        )
+        urllib.request.urlopen(req, timeout=3).close()  # noqa: S310 (trusted internal sink)
+    except Exception as e:  # best-effort: the audit emit must never break the deny path
+        logger.warning("external_denial_emit_failed", error=str(e), palace_id=palace_id)
 
 # Graphiti client pool: palace_id → Graphiti instance.
 # Bounded by cfg.max_clients.
