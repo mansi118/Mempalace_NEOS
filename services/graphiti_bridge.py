@@ -28,11 +28,12 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import structlog
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from config import BridgeConfig, PalaceRegistry
+from bridge_identity import verify_tenant_scope
 
 # ── Logging ──────────────────────────────────────────────────────
 
@@ -50,6 +51,19 @@ logger = structlog.get_logger("graphiti_bridge")
 
 cfg = BridgeConfig.from_env()
 registry = PalaceRegistry.load()
+
+
+def _enforce_identity(palace_id: str, request: Request) -> None:
+    """L2 (P2): when identity_enabled, require an X-NEop-Identity whose tenant owns palace_id;
+    refuse cross-tenant/missing and emit denied_at_layer=falkordb (the slot was plumbed-but-silent).
+    Default-off → no behaviour change until BRIDGE_IDENTITY_ENABLED is set."""
+    if not cfg.identity_enabled:
+        return
+    ok, denial = verify_tenant_scope(palace_id, request.headers.get("X-NEop-Identity"), registry)
+    if not ok:
+        logger.warning("falkordb_denied", **denial)
+        # Best-effort live emit to the unified audit (Convex recordExternalDenial) = the wiring/⛔ step.
+        raise HTTPException(status_code=403, detail=denial)
 
 # Graphiti client pool: palace_id → Graphiti instance.
 # Bounded by cfg.max_clients.
@@ -337,7 +351,7 @@ async def version():
 
 
 @app.post("/ingest", response_model=BridgeResponse)
-async def ingest(body: IngestRequest):
+async def ingest(body: IngestRequest, request: Request):
     """Ingest a single episode into the palace's knowledge graph.
 
     Graphiti extracts entities and relationships using its internal LLM,
@@ -347,6 +361,7 @@ async def ingest(body: IngestRequest):
     """
     t0 = time.time()
     palace_id = body.palace_id
+    _enforce_identity(palace_id, request)
 
     # Validate palace.
     if not registry.graph_for(palace_id):
@@ -452,7 +467,7 @@ async def ingest(body: IngestRequest):
 
 
 @app.post("/batch_ingest")
-async def batch_ingest(body: BatchIngestRequest):
+async def batch_ingest(body: BatchIngestRequest, request: Request):
     """Ingest multiple episodes sequentially. Returns per-episode status.
 
     Sequential processing because Graphiti's add_episode is not safe to
@@ -460,6 +475,7 @@ async def batch_ingest(body: BatchIngestRequest):
     """
     t0 = time.time()
     palace_id = body.palace_id
+    _enforce_identity(palace_id, request)
 
     if not registry.graph_for(palace_id):
         return JSONResponse(
@@ -539,10 +555,11 @@ async def batch_ingest(body: BatchIngestRequest):
 
 
 @app.post("/search", response_model=BridgeResponse)
-async def search(body: SearchRequest):
+async def search(body: SearchRequest, request: Request):
     """Search the palace's knowledge graph."""
     t0 = time.time()
     palace_id = body.palace_id
+    _enforce_identity(palace_id, request)
 
     if not registry.graph_for(palace_id):
         return JSONResponse(
@@ -612,10 +629,11 @@ async def search(body: SearchRequest):
 
 
 @app.post("/entity", response_model=BridgeResponse)
-async def query_entity(body: EntityRequest):
+async def query_entity(body: EntityRequest, request: Request):
     """Query a specific entity by name in the palace's graph."""
     t0 = time.time()
     palace_id = body.palace_id
+    _enforce_identity(palace_id, request)
 
     if not registry.graph_for(palace_id):
         return JSONResponse(
@@ -721,8 +739,9 @@ async def list_palaces():
 
 
 @app.get("/stats/{palace_id}")
-async def graph_stats(palace_id: str):
+async def graph_stats(palace_id: str, request: Request):
     """Entity and edge counts for a palace's graph."""
+    _enforce_identity(palace_id, request)
     graph_name = registry.graph_for(palace_id)
     if not graph_name:
         return JSONResponse(
