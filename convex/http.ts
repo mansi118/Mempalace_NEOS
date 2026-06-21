@@ -373,6 +373,26 @@ async function dispatch(
         maturity: params.maturity as string,
       });
 
+    // ── PAUSED RUNS (AwaitingApproval durable pause; P2) ───────
+    // Same own-seat discipline as twins: neopId is server-overwritten, get→recall / save→remember
+    // already gated. A caller can only reach its OWN paused runs — no cross-seat read/write.
+    case "palace_get_paused_run":
+      return ctx.runQuery(api.palace.pausedRuns.getPausedRun, {
+        palaceId,
+        neopId,
+        runId: params.runId as string,
+      });
+
+    case "palace_save_paused_run":
+      // Blind upsert; runtime owns the snapshot shape (no server-side validation).
+      return ctx.runMutation(api.palace.pausedRuns.putPausedRun, {
+        palaceId,
+        neopId,
+        runId: params.runId as string,
+        state: params.state,
+        status: params.status as string | undefined,
+      });
+
     // ── STORAGE ───────────────────────────────────────────
     // palace_remember routes through the TRUSTED ingestion pipeline (ingestExchange →
     // getOrCreateRoom → createCloset), which bypasses the per-room write guards by design.

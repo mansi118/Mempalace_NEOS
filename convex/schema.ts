@@ -343,6 +343,21 @@ export default defineSchema({
   })
     .index("by_palace_neop", ["palaceId", "neopId"]),
 
+  // ── PAUSED RUNS (AwaitingApproval durable pause; P2) ─────────
+  // One row per paused NEop run, addressed by (palaceId, neopId, runId). `state` is the runtime's
+  // to_state snapshot (runtime owns the shape; server is a blind store, like twins). The Decision
+  // Queue reads pending rows by tenant+status; resume loads by runId and reconstructs the Pi-agent.
+  paused_runs: defineTable({
+    palaceId: v.id("palaces"),
+    neopId: v.string(),                    // = seat that owns the paused run
+    runId: v.string(),                     // correlation key (Decision Queue ↔ resume)
+    state: v.any(),                        // serialized to_state snapshot (runtime-owned shape)
+    status: v.string(),                    // "pending" | "resolved"
+    updatedAt: v.number(),
+  })
+    .index("by_palace_neop_run", ["palaceId", "neopId", "runId"])
+    .index("by_palace_status", ["palaceId", "status"]),
+
   // ── VECTOR EMBEDDINGS (versioned by model) ───────────────────
 
   closet_embeddings: defineTable({

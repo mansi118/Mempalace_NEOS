@@ -275,10 +275,12 @@ const TOOL_TO_OP: Record<string, string> = {
   palace_walk_tunnel: "recall",
   palace_stats: "recall",
   palace_get_twin: "recall",
+  palace_get_paused_run: "recall",
 
   // Write ops → remember
   palace_remember: "remember",
   palace_put_twin: "remember",
+  palace_save_paused_run: "remember",
   palace_add_closet: "remember",
   palace_add_drawer: "remember",
   palace_create_room: "remember",
