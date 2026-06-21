@@ -21,6 +21,16 @@ export const EMBEDDING_DIMENSIONS = 1024;
 export const EMBEDDING_API_URL =
   `https://bedrock-runtime.${BEDROCK_REGION}.amazonaws.com/model/${encodeURIComponent(BEDROCK_MODEL_ID)}/invoke`;
 
+// #6 — embedding-provider visibility. The embedder credential must live in the CONVEX
+// DEPLOYMENT env (not the runtime container); when absent, embedOne throws → closets land
+// embeddingStatus="failed" → retrieval silently degrades. These let a health query SURFACE
+// that — single source of truth for the provider name + env key.
+export const EMBEDDER_PROVIDER = "bedrock-titan-v2";
+export const EMBEDDER_ENV_KEY = "AWS_BEARER_TOKEN_BEDROCK";
+export function embedderConfigured(): boolean {
+  return !!(process.env[EMBEDDER_ENV_KEY] || "").trim();
+}
+
 // Titan v2 accepts up to 8192 tokens (~32K chars). Keep a safe margin.
 const MAX_CONTENT_CHARS = 30_000;
 

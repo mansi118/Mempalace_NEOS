@@ -547,6 +547,49 @@ describe("Gate B-2 — owner-namespaced room resolution", () => {
 // or isn't auditable is a compliance hole.
 // ─────────────────────────────────────────────────────────────────
 
+describe("#6 — embedding health (silent-degradation visibility)", () => {
+  test("flags an unconfigured embedder (retrieval would be blind)", async () => {
+    const saved = process.env.AWS_BEARER_TOKEN_BEDROCK;
+    delete process.env.AWS_BEARER_TOKEN_BEDROCK;
+    try {
+      const t = convexTest(schema);
+      const { palaceId } = await makePalace(t);
+      const h = await t.query(api.palace.queries.embeddingHealth, { palaceId });
+      expect(h.configured).toBe(false);
+      expect(h.degraded).toBe(true);
+      expect(h.reason).toMatch(/credential absent/i);
+    } finally {
+      if (saved !== undefined) process.env.AWS_BEARER_TOKEN_BEDROCK = saved;
+    }
+  });
+
+  test("surfaces failed embeddings even when the embedder is configured", async () => {
+    const saved = process.env.AWS_BEARER_TOKEN_BEDROCK;
+    process.env.AWS_BEARER_TOKEN_BEDROCK = "test-token";
+    try {
+      const t = convexTest(schema);
+      const { palaceId, roomId } = await makePalace(t);
+      const a = await t.mutation(api.palace.mutations.createCloset,
+        baseClosetArgs(palaceId, roomId, { sourceExternalId: "a" }) as any);
+      const b = await t.mutation(api.palace.mutations.createCloset,
+        baseClosetArgs(palaceId, roomId, { sourceExternalId: "b", content: "other" }) as any);
+      await t.run(async (ctx: any) => {
+        await ctx.db.patch(a.closetId, { embeddingStatus: "generated" });
+        await ctx.db.patch(b.closetId, { embeddingStatus: "failed" });
+      });
+      const h = await t.query(api.palace.queries.embeddingHealth, { palaceId });
+      expect(h.configured).toBe(true);
+      expect(h.counts.generated).toBe(1);
+      expect(h.counts.failed).toBe(1);
+      expect(h.degraded).toBe(true);   // failed > 0
+      expect(h.reason).toMatch(/failed to embed/i);
+    } finally {
+      if (saved === undefined) delete process.env.AWS_BEARER_TOKEN_BEDROCK;
+      else process.env.AWS_BEARER_TOKEN_BEDROCK = saved;
+    }
+  });
+});
+
 describe("#4 — retract erasure cascade + audit", () => {
   test("retract redacts + invalidates the closet's drawers and writes an audited erasure event", async () => {
     const t = convexTest(schema);
