@@ -296,6 +296,7 @@ const TOOL_TO_OP: Record<string, string> = {
   // Write ops → remember
   palace_remember: "remember",
   palace_save_paused_run: "remember",
+  palace_resolve_paused_run: "remember",
   palace_add_closet: "remember",
   palace_add_drawer: "remember",
   palace_create_room: "remember",

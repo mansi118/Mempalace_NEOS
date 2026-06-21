@@ -355,6 +355,7 @@ describe("Tool to runtime op mapping", () => {
     expect(runtimeOpForTool("palace_put_twin")).toBeNull();
     expect(runtimeOpForTool("palace_get_paused_run")).toBe("recall");
     expect(runtimeOpForTool("palace_save_paused_run")).toBe("remember");
+    expect(runtimeOpForTool("palace_resolve_paused_run")).toBe("remember");
   });
 });
 
