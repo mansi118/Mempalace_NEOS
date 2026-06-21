@@ -69,6 +69,7 @@ const baseClosetArgs = (palaceId: string, roomId: string, overrides: Record<stri
   authorType: "adapter",
   authorId: "claude-export",
   confidence: 0.8,
+  actorNeopId: "_system",   // Phase B: tests act as a trusted internal seeder
   ...overrides,
 });
 
@@ -184,7 +185,7 @@ describe("Phase 1 invariants", () => {
       t.mutation(api.palace.mutations.retractCloset, {
         closetId: r.closetId,
         reason: "test",
-        retractedBy: "_admin",
+        retractedBy: "_admin", actorNeopId: "_system",
       }),
     ).rejects.toThrow(/legal hold/i);
   });
@@ -208,7 +209,7 @@ describe("Phase 1 invariants", () => {
     await t.mutation(api.palace.mutations.retractCloset, {
       closetId: r.closetId,
       reason: "GDPR request",
-      retractedBy: "_admin",
+      retractedBy: "_admin", actorNeopId: "_system",
     });
 
     const closet = await t.query(api.palace.queries.getCloset, { closetId: r.closetId });
@@ -252,6 +253,7 @@ describe("Phase 1 invariants", () => {
         toRoomId: roomBId,
         relationship: "depends_on",
         strength: 0.8,
+        actorNeopId: "_system",
       }),
     ).rejects.toThrow(/cross-palace/i);
   });
@@ -402,7 +404,7 @@ describe("Phase 1 invariants", () => {
     expect(visible.length).toBe(2);
 
     await t.mutation(api.palace.mutations.retractCloset, {
-      closetId: r1.closetId, reason: "test", retractedBy: "_admin",
+      closetId: r1.closetId, reason: "test", retractedBy: "_admin", actorNeopId: "_system",
     });
 
     visible = await t.query(api.palace.queries.listClosets, { roomId });
@@ -496,10 +498,10 @@ describe("Gate B-2 — owner-namespaced room resolution", () => {
     const { palaceId } = await makePalace(t);
 
     const a1 = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_a",
+      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_a", actorNeopId: "_system",
     });
     const b1 = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_b",
+      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_b", actorNeopId: "_system",
     });
     expect(a1).not.toEqual(b1);
 
@@ -510,7 +512,7 @@ describe("Gate B-2 — owner-namespaced room resolution", () => {
 
     // Idempotent WITHIN an owner namespace.
     const a2 = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_a",
+      palaceId, wingName: "platform", roomName: "topic", ownerNeopId: "seat_a", actorNeopId: "_system",
     });
     expect(a2).toEqual(a1);
   });
@@ -521,16 +523,16 @@ describe("Gate B-2 — owner-namespaced room resolution", () => {
 
     // Company namespace (admin / bulk-ingest path: no owner) — stable on repeat.
     const company = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "shared-topic",
+      palaceId, wingName: "platform", roomName: "shared-topic", actorNeopId: "_system",
     });
     const companyAgain = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "shared-topic",
+      palaceId, wingName: "platform", roomName: "shared-topic", actorNeopId: "_system",
     });
     expect(companyAgain).toEqual(company);
 
     // A scoped seat gets its OWN room, not the company one.
     const seat = await t.mutation(api.palace.mutations.getOrCreateRoom, {
-      palaceId, wingName: "platform", roomName: "shared-topic", ownerNeopId: "seat_a",
+      palaceId, wingName: "platform", roomName: "shared-topic", ownerNeopId: "seat_a", actorNeopId: "_system",
     });
     expect(seat).not.toEqual(company);
 
@@ -596,11 +598,11 @@ describe("#4 — retract erasure cascade + audit", () => {
     const { palaceId, roomId } = await makePalace(t);
     const r = await t.mutation(api.palace.mutations.createCloset, baseClosetArgs(palaceId, roomId) as any);
     await t.mutation(api.palace.mutations.createDrawer, {
-      closetId: r.closetId, palaceId, fact: "sensitive PII fact", validFrom: 1, confidence: 0.9,
+      closetId: r.closetId, palaceId, fact: "sensitive PII fact", validFrom: 1, confidence: 0.9, actorNeopId: "_system",
     });
 
     const res = await t.mutation(api.palace.mutations.retractCloset, {
-      closetId: r.closetId, reason: "GDPR erase", retractedBy: "_admin",
+      closetId: r.closetId, reason: "GDPR erase", retractedBy: "_admin", actorNeopId: "_system",
     });
     expect(res.drawersRedacted).toBe(1);
 
@@ -625,7 +627,7 @@ describe("#4 — retract erasure cascade + audit", () => {
     const { palaceId, roomId } = await makePalace(t);
     const r = await t.mutation(api.palace.mutations.createCloset, baseClosetArgs(palaceId, roomId) as any);
     const res = await t.mutation(api.palace.mutations.retractCloset, {
-      closetId: r.closetId, reason: "x", retractedBy: "_admin",
+      closetId: r.closetId, reason: "x", retractedBy: "_admin", actorNeopId: "_system",
     });
     expect(res.drawersRedacted).toBe(0);
     const audits = await t.run(async (ctx: any) =>
