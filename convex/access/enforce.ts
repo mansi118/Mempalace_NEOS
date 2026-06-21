@@ -113,6 +113,23 @@ export async function resolvePermissions(
   };
 }
 
+// B2 (docs/decisions/twin-keying.md) — identity WITHOUT memory capabilities. A validly-named seat HAS an
+// identity (its neopId) even with no neop_permissions row; it just holds no runtime ops. Used for twin
+// ops (identity self-access): the seat reaches its OWN twin without a perms row, while memory/content
+// tools still deny via enforceRuntimeOp (empty runtimeOps). Never grants an op; never elevates to admin.
+// The exact-own-twin bound lives in getTwin/putTwin (`q.eq("neopId", neopId)`, server-derived neopId).
+export function identityOnlyPerms(neopId: string): ResolvedPermissions {
+  return {
+    neopId,
+    effectiveNeopId: neopId,
+    runtimeOps: [],
+    contentAccess: {},
+    scopeWing: null,
+    scopeRoom: null,
+    isAdmin: false,
+  };
+}
+
 // ─── Runtime op check ───────────────────────────────────────────
 
 export function hasRuntimeOp(perms: ResolvedPermissions, op: string): boolean {
@@ -274,12 +291,10 @@ const TOOL_TO_OP: Record<string, string> = {
   palace_get_room: "recall",
   palace_walk_tunnel: "recall",
   palace_stats: "recall",
-  palace_get_twin: "recall",
   palace_get_paused_run: "recall",
 
   // Write ops → remember
   palace_remember: "remember",
-  palace_put_twin: "remember",
   palace_save_paused_run: "remember",
   palace_add_closet: "remember",
   palace_add_drawer: "remember",
@@ -294,6 +309,14 @@ const TOOL_TO_OP: Record<string, string> = {
 
   // Meta
   palace_export: "recall",
+
+  // NOTE: palace_get_twin / palace_put_twin are DELIBERATELY ABSENT (B2, docs/decisions/twin-keying.md).
+  // The twin is IDENTITY, not memory — reading/writing your own self-model is self-access by *being* that
+  // identity, categorically different from recall/remember (memory of stored facts). So twin ops are NOT
+  // gated by a memory op. A twin op can only ever touch the twin at its own request neopId (getTwin/putTwin
+  // key by an exact `q.eq("neopId", neopId)` — no prefix, no wildcard), and neopId is the server-derived
+  // requester (edge-auth E1–E5, unforgeable). Cross-user isolation rests on that exact server-derived key,
+  // NOT on the recall/remember gate (which only checked "does this seat do memory", never twin ownership).
 };
 
 export function runtimeOpForTool(tool: string): string | null {
