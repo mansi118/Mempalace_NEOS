@@ -9,18 +9,18 @@
 import { query, mutation } from "../_generated/server.js";
 import { v } from "convex/values";
 
-// palace_get_paused_run → { state: <object> | null, status?, updatedAt? }
+// palace_get_paused_run → { state, neopId, status, updatedAt } | { state: null }. Keyed by (palaceId,
+// runId): the per-run SCOPE (neopId) is read FROM the row, never accepted from the caller — so "resume
+// this run" can't become "resume any run I name". (Provenance-not-assertion; see runtime ConvexSnapshotStore.)
 export const getPausedRun = query({
-  args: { palaceId: v.id("palaces"), neopId: v.string(), runId: v.string() },
-  handler: async (ctx, { palaceId, neopId, runId }) => {
+  args: { palaceId: v.id("palaces"), runId: v.string() },
+  handler: async (ctx, { palaceId, runId }) => {
     const row = await ctx.db
       .query("paused_runs")
-      .withIndex("by_palace_neop_run", (q) =>
-        q.eq("palaceId", palaceId).eq("neopId", neopId).eq("runId", runId),
-      )
+      .withIndex("by_palace_run", (q) => q.eq("palaceId", palaceId).eq("runId", runId))
       .first();
     if (!row) return { state: null };
-    return { state: row.state, status: row.status, updatedAt: row.updatedAt };
+    return { state: row.state, neopId: row.neopId, status: row.status, updatedAt: row.updatedAt };
   },
 });
 
@@ -86,20 +86,17 @@ export const pendingPausedRuns = query({
 
 // palace_resolve_paused_run → flip a pause pending→resolved (or →denied) once the run has resumed to a
 // terminal. Patches ONLY status (the snapshot is unchanged), so the Decision Queue stops showing it. Keyed
-// by the exact (palaceId, neopId, runId); a no-op if the row is gone.
+// by (palaceId, runId) — scope (neopId) is the row's, not the caller's; a no-op if the row is gone.
 export const markPausedRun = mutation({
   args: {
     palaceId: v.id("palaces"),
-    neopId: v.string(),
     runId: v.string(),
     status: v.string(), // "resolved" | "denied"
   },
-  handler: async (ctx, { palaceId, neopId, runId, status }) => {
+  handler: async (ctx, { palaceId, runId, status }) => {
     const row = await ctx.db
       .query("paused_runs")
-      .withIndex("by_palace_neop_run", (q) =>
-        q.eq("palaceId", palaceId).eq("neopId", neopId).eq("runId", runId),
-      )
+      .withIndex("by_palace_run", (q) => q.eq("palaceId", palaceId).eq("runId", runId))
       .first();
     if (!row) return { status: "noop", runId };
     await ctx.db.patch(row._id, { status, updatedAt: Date.now() });

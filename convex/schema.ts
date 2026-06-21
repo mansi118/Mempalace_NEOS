@@ -356,6 +356,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_palace_neop_run", ["palaceId", "neopId", "runId"])
+    .index("by_palace_run", ["palaceId", "runId"]) // load/resolve key here → neopId read FROM the row
     .index("by_palace_status", ["palaceId", "status"]),
 
   // ── VECTOR EMBEDDINGS (versioned by model) ───────────────────
