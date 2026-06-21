@@ -31,6 +31,7 @@ class BridgeConfig:
     max_clients: int = 10
     request_timeout: int = 60
     env: str = "production"
+    identity_enabled: bool = False   # L2: require X-NEop-Identity tenant-scope (default off)
 
     @classmethod
     def from_env(cls) -> "BridgeConfig":
@@ -47,6 +48,7 @@ class BridgeConfig:
             max_clients=int(os.environ.get("BRIDGE_MAX_CLIENTS", "10")),
             request_timeout=int(os.environ.get("BRIDGE_REQUEST_TIMEOUT", "60")),
             env=os.environ.get("BRIDGE_ENV", "production"),
+            identity_enabled=os.environ.get("BRIDGE_IDENTITY_ENABLED", "").lower() in ("1", "true", "yes"),
         )
 
     @property
