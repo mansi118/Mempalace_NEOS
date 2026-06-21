@@ -147,10 +147,25 @@ export async function coreSearch(
   );
   const clientId = palaceDoc?.clientId ?? "";
 
-  const [queryEmbedding, graphHits] = await Promise.all([
-    embedOne(trimmed),
-    clientId ? graphSearch(clientId, trimmed, 15) : Promise.resolve([]),
-  ]);
+  // #6: retrieval degrades GRACEFULLY when the embedder is unavailable (credential absent /
+  // provider blocked) — return the structured low-confidence shape instead of an uncaught 500.
+  // embeddingHealth surfaces the root cause. The graph is advisory, so its failure never blocks.
+  let queryEmbedding: number[];
+  try {
+    queryEmbedding = await embedOne(trimmed);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return {
+      results: [],
+      confidence: "low" as const,
+      reason: `retrieval_unavailable: embedder error (${msg.slice(0, 80)})`,
+      tokenEstimate: 0,
+      queryTimeMs: 0,
+    };
+  }
+  const graphHits = clientId
+    ? await graphSearch(clientId, trimmed, 15).catch(() => [])
+    : [];
 
   const graphBoostMap = buildGraphBoostMap(graphHits);
 
