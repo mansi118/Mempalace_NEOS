@@ -98,6 +98,13 @@ export const ADMIN_NEOP_ID = "_admin";
 // write paths so they remain explicit (and survive the Phase-B undefined⇒DENY flip).
 export const SYSTEM_NEOP_ID = "_system";
 
+// A reserved identity is SERVER-MINTED ONLY — never a valid channel-derived requester
+// and never a valid binding target (edge-auth #1/#3). Any `_`-prefixed id is reserved
+// (covers _admin/_system + future elevated ids). Mirrors acp/edge_auth.is_reserved_identity.
+export function isReservedIdentity(id: string): boolean {
+  return typeof id === "string" && id.trim().startsWith("_");
+}
+
 // ───── Convex document size guard ─────
 
 // Convex enforces a 1MB document limit. Leave headroom for metadata.

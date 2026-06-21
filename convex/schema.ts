@@ -365,6 +365,23 @@ export default defineSchema({
     .index("by_palace", ["palaceId"])
     .index("by_palace_neop", ["palaceId", "neopId"]),
 
+  // ── EDGE-AUTH: human ↔ seat bindings (#1/#3, E1) ─────────────
+  //
+  // The ONLY source of requester identity. resolveBinding(mxid) → (tenant, seat, role).
+  // NEVER writable from a channel path (deliberately NOT registered as an /mcp tool —
+  // the http dispatch can't reach it); provisioned per tenant. Write-time validation
+  // (upsertSeatBinding) REJECTS a reserved seat_id — a human is never bound to _admin/_system.
+  seat_bindings: defineTable({
+    mxid: v.string(),                      // Matrix user id (credential-verified by the AS)
+    tenant_id: v.string(),                 // = palace/tenant; from the AS namespace, never the body
+    seat_id: v.string(),                   // bound NEop seat (neopId) — never a reserved id
+    role: v.union(v.literal("owner"), v.literal("admin"), v.literal("member")),
+    status: v.union(v.literal("active"), v.literal("suspended")),
+    updatedAt: v.number(),
+  })
+    .index("by_mxid", ["mxid"])
+    .index("by_tenant", ["tenant_id"]),
+
   // ── INGESTION LOG ────────────────────────────────────────────
 
   ingestion_log: defineTable({
