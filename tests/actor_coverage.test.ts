@@ -88,6 +88,26 @@ interface CallSite {
   line: number;
   fn: string;
   hasActor: boolean;
+  actorValue: string | null;   // the expression passed as actorNeopId, for provenance
+}
+
+// PROVENANCE allowlist (the Phase-B sharpening): the actor threaded into a guarded
+// mutation must be SERVER-DERIVED — a resolved-perms variable or a trusted-actor
+// constant — never a request-controlled expression. "Not undefined" stops the admin
+// outage; this stops a future client-claimed `_admin`/seat from riding the same arg.
+const SERVER_DERIVED_ACTOR =
+  /^(actorNeopId|SYSTEM_NEOP_ID|ADMIN_NEOP_ID|"_system"|"_admin"|'_system'|'_admin')$/;
+// Request-derived tokens that must NEVER appear in an actor value or its definition.
+const REQUEST_DERIVED = /\b(params|body|request|headers?)\b/;
+
+// Extract the value expression passed as actorNeopId from a captured object body.
+// Handles `actorNeopId: <expr>,` (strips trailing comment) and ES6 shorthand `actorNeopId`.
+function extractActorValue(body: string | null): string | null {
+  if (body === null) return null;
+  const kv = body.match(/\bactorNeopId\s*:\s*([^,\n}]+)/);
+  if (kv && kv[1] !== undefined) return kv[1].replace(/\/\/.*$/, "").trim();
+  if (/\bactorNeopId\s*(,|\}|$|[\r\n])/.test(body)) return "actorNeopId"; // shorthand → the var
+  return null;
 }
 
 function findCallSites(file: string): CallSite[] {
@@ -108,7 +128,10 @@ function findCallSites(file: string): CallSite[] {
       // bare property terminated by comma / newline / closing brace).
       const hasActor =
         body !== null && /\bactorNeopId\s*(:|,|\}|$|[\r\n])/.test(body);
-      sites.push({ file: file.slice(ROOT.length + 1), line, fn, hasActor });
+      sites.push({
+        file: file.slice(ROOT.length + 1), line, fn, hasActor,
+        actorValue: extractActorValue(body),
+      });
     }
   }
   return sites;
@@ -134,5 +157,51 @@ describe("Phase-A actor coverage (Phase-B flip gate)", () => {
       `These internal callers rely on undefined-⇒-trusted and would break the ` +
         `Phase-B undefined⇒DENY flip:\n${missing.join("\n")}`,
     ).toEqual([]);
+  });
+
+  // ── Provenance (the Phase-B sharpening) ─────────────────────────────────────
+  // "Not undefined" prevents the admin outage; these two assert the actor is
+  // SERVER-DERIVED and correct-for-path, so a client-claimed actor can't ride the
+  // same arg. (Upstream identity is still client-asserted until edge-auth / #1+#3 —
+  // this proves the dispatch→SoT thread itself carries no request input.)
+
+  test("every threaded actorNeopId VALUE is server-derived (never request input)", () => {
+    const bad = ALL_SITES
+      .filter((s) => s.hasActor)
+      .filter(
+        (s) =>
+          s.actorValue === null ||
+          !SERVER_DERIVED_ACTOR.test(s.actorValue) ||
+          REQUEST_DERIVED.test(s.actorValue),
+      )
+      .map((s) => `${s.file}:${s.line} → ${s.fn}() actorNeopId=${s.actorValue ?? "(unparsed)"}`);
+    expect(
+      bad,
+      `actorNeopId must be a server-derived var/constant, not request input:\n${bad.join("\n")}`,
+    ).toEqual([]);
+  });
+
+  test("the threaded actorNeopId variable is derived from resolved perms, not request input", () => {
+    // The shorthand call sites pass the `actorNeopId` var; prove its definition(s)
+    // come from `perms.` and contain no params/body/request/header tokens.
+    const defs: { where: string; rhs: string }[] = [];
+    const bad: string[] = [];
+    for (const file of SCAN_DIRS.flatMap((d) => listSourceFiles(join(ROOT, d)))) {
+      const src = readFileSync(file, "utf8");
+      const re = /\b(?:const|let)\s+actorNeopId\b[^=]*=\s*([^;]+);/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(src)) !== null) {
+        const rhs = (m[1] ?? "").trim();
+        const line = src.slice(0, m.index).split("\n").length;
+        const where = `${file.slice(ROOT.length + 1)}:${line}`;
+        defs.push({ where, rhs });
+        if (!/\bperms\./.test(rhs) || REQUEST_DERIVED.test(rhs)) {
+          bad.push(`${where} → const actorNeopId = ${rhs}`);
+        }
+      }
+    }
+    // Self-check: the dispatch's actorNeopId definition must exist (guard not vacuous).
+    expect(defs.length, "no `const actorNeopId =` found to verify").toBeGreaterThan(0);
+    expect(bad, `actorNeopId must derive from resolved perms:\n${bad.join("\n")}`).toEqual([]);
   });
 });
