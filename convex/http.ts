@@ -448,6 +448,15 @@ async function dispatch(
         status: params.status as string | undefined,
       });
 
+    case "palace_resolve_paused_run":
+      // Flip a pause pending→resolved|denied on resume, so the Decision Queue stops showing it.
+      return ctx.runMutation(api.palace.pausedRuns.markPausedRun, {
+        palaceId,
+        neopId,
+        runId: params.runId as string,
+        status: (params.status as string) ?? "resolved",
+      });
+
     // ── STORAGE ───────────────────────────────────────────
     // palace_remember routes through the TRUSTED ingestion pipeline (ingestExchange →
     // getOrCreateRoom → createCloset), which bypasses the per-room write guards by design.

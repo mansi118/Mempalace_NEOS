@@ -57,3 +57,52 @@ export const putPausedRun = mutation({
     return { status: "ok", runId, upsert: "insert" };
   },
 });
+
+// palace_list_paused_runs → the DECISION QUEUE read: the tenant's PENDING pauses (AwaitingApproval),
+// newest first. Uses by_palace_status so it scans only pending rows (bounded). Surfaces the gated action
+// + scope so an operator can decide; the full snapshot stays server-side (loaded by runId on resume).
+export const pendingPausedRuns = query({
+  args: { palaceId: v.id("palaces"), limit: v.optional(v.number()) },
+  handler: async (ctx, { palaceId, limit }) => {
+    const rows = await ctx.db
+      .query("paused_runs")
+      .withIndex("by_palace_status", (q) =>
+        q.eq("palaceId", palaceId).eq("status", "pending"),
+      )
+      .order("desc")
+      .take(limit ?? 100);
+    return {
+      pending: rows.map((r) => ({
+        runId: r.runId,
+        neopId: r.neopId,
+        pauseScope: (r.state as { pause_scope?: string })?.pause_scope ?? null,
+        action: (r.state as { action?: unknown })?.action ?? null,
+        updatedAt: r.updatedAt,
+      })),
+      count: rows.length,
+    };
+  },
+});
+
+// palace_resolve_paused_run → flip a pause pending→resolved (or →denied) once the run has resumed to a
+// terminal. Patches ONLY status (the snapshot is unchanged), so the Decision Queue stops showing it. Keyed
+// by the exact (palaceId, neopId, runId); a no-op if the row is gone.
+export const markPausedRun = mutation({
+  args: {
+    palaceId: v.id("palaces"),
+    neopId: v.string(),
+    runId: v.string(),
+    status: v.string(), // "resolved" | "denied"
+  },
+  handler: async (ctx, { palaceId, neopId, runId, status }) => {
+    const row = await ctx.db
+      .query("paused_runs")
+      .withIndex("by_palace_neop_run", (q) =>
+        q.eq("palaceId", palaceId).eq("neopId", neopId).eq("runId", runId),
+      )
+      .first();
+    if (!row) return { status: "noop", runId };
+    await ctx.db.patch(row._id, { status, updatedAt: Date.now() });
+    return { status: "ok", runId };
+  },
+});
