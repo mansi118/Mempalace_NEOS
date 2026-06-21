@@ -432,9 +432,9 @@ async function dispatch(
     // Same own-seat discipline as twins: neopId is server-overwritten, get→recall / save→remember
     // already gated. A caller can only reach its OWN paused runs — no cross-seat read/write.
     case "palace_get_paused_run":
+      // Keyed by (palaceId, runId); neopId scope is read FROM the row, not the caller's envelope.
       return ctx.runQuery(api.palace.pausedRuns.getPausedRun, {
         palaceId,
-        neopId,
         runId: params.runId as string,
       });
 
@@ -452,7 +452,6 @@ async function dispatch(
       // Flip a pause pending→resolved|denied on resume, so the Decision Queue stops showing it.
       return ctx.runMutation(api.palace.pausedRuns.markPausedRun, {
         palaceId,
-        neopId,
         runId: params.runId as string,
         status: (params.status as string) ?? "resolved",
       });
