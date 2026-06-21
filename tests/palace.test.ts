@@ -185,7 +185,7 @@ describe("Phase 1 invariants", () => {
       t.mutation(api.palace.mutations.retractCloset, {
         closetId: r.closetId,
         reason: "test",
-        retractedBy: "_admin",
+        retractedBy: "_admin", actorNeopId: "_system",
       }),
     ).rejects.toThrow(/legal hold/i);
   });
@@ -209,7 +209,7 @@ describe("Phase 1 invariants", () => {
     await t.mutation(api.palace.mutations.retractCloset, {
       closetId: r.closetId,
       reason: "GDPR request",
-      retractedBy: "_admin",
+      retractedBy: "_admin", actorNeopId: "_system",
     });
 
     const closet = await t.query(api.palace.queries.getCloset, { closetId: r.closetId });
@@ -253,6 +253,7 @@ describe("Phase 1 invariants", () => {
         toRoomId: roomBId,
         relationship: "depends_on",
         strength: 0.8,
+        actorNeopId: "_system",
       }),
     ).rejects.toThrow(/cross-palace/i);
   });
@@ -403,7 +404,7 @@ describe("Phase 1 invariants", () => {
     expect(visible.length).toBe(2);
 
     await t.mutation(api.palace.mutations.retractCloset, {
-      closetId: r1.closetId, reason: "test", retractedBy: "_admin",
+      closetId: r1.closetId, reason: "test", retractedBy: "_admin", actorNeopId: "_system",
     });
 
     visible = await t.query(api.palace.queries.listClosets, { roomId });
@@ -601,7 +602,7 @@ describe("#4 — retract erasure cascade + audit", () => {
     });
 
     const res = await t.mutation(api.palace.mutations.retractCloset, {
-      closetId: r.closetId, reason: "GDPR erase", retractedBy: "_admin",
+      closetId: r.closetId, reason: "GDPR erase", retractedBy: "_admin", actorNeopId: "_system",
     });
     expect(res.drawersRedacted).toBe(1);
 
@@ -626,7 +627,7 @@ describe("#4 — retract erasure cascade + audit", () => {
     const { palaceId, roomId } = await makePalace(t);
     const r = await t.mutation(api.palace.mutations.createCloset, baseClosetArgs(palaceId, roomId) as any);
     const res = await t.mutation(api.palace.mutations.retractCloset, {
-      closetId: r.closetId, reason: "x", retractedBy: "_admin",
+      closetId: r.closetId, reason: "x", retractedBy: "_admin", actorNeopId: "_system",
     });
     expect(res.drawersRedacted).toBe(0);
     const audits = await t.run(async (ctx: any) =>

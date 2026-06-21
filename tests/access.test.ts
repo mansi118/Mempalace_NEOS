@@ -398,10 +398,10 @@ async function seedClosetDrawer(t: any, palaceId: string, roomId: string) {
   const r = await t.mutation(api.palace.mutations.createCloset, {
     palaceId, roomId, content: "owned by B", category: "fact",
     sourceType: "manual", sourceAdapter: "test", sourceExternalId: "b-seed",
-    authorType: "system", authorId: "test", confidence: 0.9,
+    authorType: "system", authorId: "test", confidence: 0.9, actorNeopId: "_system",
   });
   await t.mutation(api.palace.mutations.createDrawer, {
-    closetId: r.closetId, palaceId, fact: "B fact", validFrom: 1, confidence: 0.9,
+    closetId: r.closetId, palaceId, fact: "B fact", validFrom: 1, confidence: 0.9, actorNeopId: "_system",
   });
   const drawers = await t.query(api.palace.queries.listDrawers, { closetId: r.closetId });
   return { closetId: r.closetId as string, drawerId: drawers[0]._id as string };
@@ -567,10 +567,11 @@ describe("Gate A+ — L1 SoT independent enforcement (direct mutation calls)", (
     ).rejects.toThrow(/SoT write-scope/i);
   });
 
-  test("createCloset DIRECT with NO actorNeopId → allowed (trusted internal caller preserved)", async () => {
+  test("createCloset DIRECT with NO actorNeopId → DENIED (Phase B fail-closed)", async () => {
     const { t, palaceId, roomB } = await setupSeatPalace();
-    const r = await t.mutation(api.palace.mutations.createCloset, closetArgs(palaceId, roomB) as any);
-    expect(r.status).toBe("created"); // crons/ingestion still write anywhere
+    await expect(
+      t.mutation(api.palace.mutations.createCloset, closetArgs(palaceId, roomB) as any),
+    ).rejects.toThrow(/fail-closed/i); // omission no longer means trust; callers pass _system
   });
 
   test("createCloset DIRECT with actorNeopId=_admin → allowed (admin bypass)", async () => {
