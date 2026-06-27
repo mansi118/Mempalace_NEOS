@@ -11,6 +11,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY config.py .
+COPY bridge_identity.py .
 COPY graphiti_bridge.py .
 COPY graph_writer.py .
 
