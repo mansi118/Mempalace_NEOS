@@ -23,6 +23,7 @@ import { describe, expect, test } from "vitest";
 import { convexTest } from "convex-test";
 import { api } from "../convex/_generated/api.js";
 import schema from "../convex/schema.js";
+import { EMBEDDER_ENV_KEY } from "../convex/lib/embedder.js"; // provider-agnostic: survives provider switches
 
 const EMBED_DIM = 1024; // Bedrock Titan Text Embeddings v2
 const fakeEmbedding = (): number[] => Array.from({ length: EMBED_DIM }, () => Math.random());
@@ -551,8 +552,8 @@ describe("Gate B-2 — owner-namespaced room resolution", () => {
 
 describe("#6 — embedding health (silent-degradation visibility)", () => {
   test("flags an unconfigured embedder (retrieval would be blind)", async () => {
-    const saved = process.env.AWS_BEARER_TOKEN_BEDROCK;
-    delete process.env.AWS_BEARER_TOKEN_BEDROCK;
+    const saved = process.env[EMBEDDER_ENV_KEY];
+    delete process.env[EMBEDDER_ENV_KEY];
     try {
       const t = convexTest(schema);
       const { palaceId } = await makePalace(t);
@@ -561,13 +562,13 @@ describe("#6 — embedding health (silent-degradation visibility)", () => {
       expect(h.degraded).toBe(true);
       expect(h.reason).toMatch(/credential absent/i);
     } finally {
-      if (saved !== undefined) process.env.AWS_BEARER_TOKEN_BEDROCK = saved;
+      if (saved !== undefined) process.env[EMBEDDER_ENV_KEY] = saved;
     }
   });
 
   test("surfaces failed embeddings even when the embedder is configured", async () => {
-    const saved = process.env.AWS_BEARER_TOKEN_BEDROCK;
-    process.env.AWS_BEARER_TOKEN_BEDROCK = "test-token";
+    const saved = process.env[EMBEDDER_ENV_KEY];
+    process.env[EMBEDDER_ENV_KEY] = "test-token";
     try {
       const t = convexTest(schema);
       const { palaceId, roomId } = await makePalace(t);
@@ -586,8 +587,8 @@ describe("#6 — embedding health (silent-degradation visibility)", () => {
       expect(h.degraded).toBe(true);   // failed > 0
       expect(h.reason).toMatch(/failed to embed/i);
     } finally {
-      if (saved === undefined) delete process.env.AWS_BEARER_TOKEN_BEDROCK;
-      else process.env.AWS_BEARER_TOKEN_BEDROCK = saved;
+      if (saved === undefined) delete process.env[EMBEDDER_ENV_KEY];
+      else process.env[EMBEDDER_ENV_KEY] = saved;
     }
   });
 });

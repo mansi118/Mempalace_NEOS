@@ -23,7 +23,7 @@ import { action } from "../_generated/server.js";
 import { internal } from "../_generated/api.js";
 import { v } from "convex/values";
 import type { Id, Doc } from "../_generated/dataModel.js";
-import { embedOne } from "../lib/qwen.js";
+import { embedOne } from "../lib/embedder.js";
 import { graphSearch, buildGraphBoostMap } from "../lib/graphClient.js";
 
 // Bedrock Titan v2 score distribution (observed empirically, April 2026):
