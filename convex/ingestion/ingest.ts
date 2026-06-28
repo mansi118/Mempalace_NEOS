@@ -20,7 +20,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel.js";
 import { scanForPII } from "./pii.js";
 import { routeToWing, routeToRoom, classifyCategory, scoreConfidence } from "./route.js";
-import { embedOne, EMBEDDING_MODEL } from "../lib/qwen.js";
+import { embedOne, EMBEDDING_MODEL } from "../lib/embedder.js";
 import { callGeminiLlm } from "../lib/geminiLlm.js";
 import { CATEGORIES, SYSTEM_NEOP_ID } from "../lib/enums.js";
 import { EXTRACTION_SYSTEM_PROMPT, parseExtractionResponse, type ExtractionItem } from "./extract.js";

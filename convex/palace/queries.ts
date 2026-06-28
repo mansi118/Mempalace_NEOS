@@ -7,7 +7,7 @@
 import { query, internalQuery } from "../_generated/server.js";
 import { v } from "convex/values";
 import type { Id, Doc } from "../_generated/dataModel.js";
-import { embedderConfigured, EMBEDDER_PROVIDER, EMBEDDER_ENV_KEY } from "../lib/qwen.js";
+import { embedderConfigured, EMBEDDER_PROVIDER, EMBEDDER_ENV_KEY } from "../lib/embedder.js";
 
 // ─── PALACES ─────────────────────────────────────────────────
 
