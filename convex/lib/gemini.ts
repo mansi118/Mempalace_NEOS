@@ -1,11 +1,13 @@
 // Gemini text embeddings — embedding provider (the unblocked path; Bedrock Titan is account-blocked).
 //
 // Model:    gemini-embedding-001  (Google Generative Language API, v1beta)
-// Dims:     1024  — matches the schema `by_embedding` vector index EXACTLY (no re-index).
-//           gemini-embedding-001 supports outputDimensionality (Matryoshka); we request 1024.
+// Dims:     768  — matches the schema `by_embedding` vector index (V1 spec D1). gemini-embedding-001 is
+//           3072 native; we request 768 via outputDimensionality (Matryoshka). NOTE: the spec said
+//           "native embedding-001 @ 768", but `models/embedding-001` + `models/text-embedding-004` both
+//           404 on this key — only gemini-embedding-001 is available, so MRL-768 is the achievable 768.
 // Norm:     CLIENT-SIDE L2. Gemini only auto-normalizes at the full 3072-d output; at a truncated
-//           dimension it returns UN-normalized vectors (measured L2≈0.61 @1024). Cosine/dot retrieval
-//           needs unit vectors, so we normalize here — the silent-garbage failure class if skipped.
+//           dimension it returns UN-normalized vectors. Cosine/dot retrieval needs unit vectors, so we
+//           normalize here — the silent-garbage failure class if skipped.
 // Context:  ~2048 input tokens for this model (smaller than Titan's 8K) → tighter truncation.
 // Task:     uses taskType (RETRIEVAL_DOCUMENT / RETRIEVAL_QUERY) — the `inputType` arg that was a
 //           no-op for Titan is a real asymmetric-retrieval quality lever for Gemini.
@@ -17,7 +19,7 @@
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 
 export const EMBEDDING_MODEL = "gemini-embedding-001";
-export const EMBEDDING_DIMENSIONS = 1024;
+export const EMBEDDING_DIMENSIONS = 768;
 export const EMBEDDING_API_URL =
   `${GEMINI_API_BASE}/models/${EMBEDDING_MODEL}:embedContent`;
 

@@ -373,7 +373,7 @@ export default defineSchema({
     .index("by_closet", ["closetId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
-      dimensions: 1024,
+      dimensions: 768, // M1/D1: Gemini gemini-embedding-001 @768 (MRL). Free re-index — empty corpus.
       filterFields: ["palaceId", "wingId"],
     }),
 
