@@ -16,7 +16,7 @@
 
 import { action } from "../_generated/server.js";
 import { v } from "convex/values";
-import { callGeminiLlm } from "../lib/geminiLlm.js";
+import { callBedrockLlm } from "../lib/bedrockLlm.js";
 import { CATEGORIES } from "../lib/enums.js";
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ export const extractMemories = action({
 
     const userPrompt = `${contextPrefix}${args.exchangeText}`;
 
-    const response = await callGeminiLlm({
+    const response = await callBedrockLlm({
       systemPrompt: SYSTEM_PROMPT,
       userPrompt,
       jsonMode: true,
