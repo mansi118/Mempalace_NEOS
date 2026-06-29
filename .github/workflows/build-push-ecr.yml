@@ -1,0 +1,59 @@
+# Durable image pipeline (sibling of NEURAL-ops .github/workflows/build-push-ecr.yml):
+# GitHub Actions → OIDC (no long-lived keys) → ECR. Builds the Graphiti BRIDGE image (services/Dockerfile)
+# and pushes it to ECR. Manual trigger (workflow_dispatch) + on changes to the bridge build context.
+# linux/amd64 (Fargate x86 default). The OIDC role `gha-ecr-push` is provisioned by NEURAL-ops
+# infra/terraform/gha-oidc.tf — its trust list includes THIS repo and its ECR-push perm is scoped to
+# neos-dogfood-*. Runtime image is built by the NEURAL-ops workflow; this one owns the bridge only.
+name: build-push-ecr
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag (default: the commit SHA)"
+        required: false
+  push:
+    branches: [main]
+    paths:
+      - "services/**"
+      - ".github/workflows/build-push-ecr.yml"
+
+permissions:
+  id-token: write   # required for OIDC
+  contents: read
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPO: neos-dogfood-bridge
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC (no stored keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::071126865245:role/gha-ecr-push
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push bridge image (linux/amd64)
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG: ${{ github.event.inputs.tag || github.sha }}
+        run: |
+          set -euo pipefail
+          IMAGE="$REGISTRY/$ECR_REPO:${TAG::12}"
+          # Build context is services/ (the bridge Dockerfile COPYs config.py/bridge_identity.py/
+          # graphiti_bridge.py/graph_writer.py/requirements.txt; listens on 8100).
+          docker build --platform linux/amd64 -f services/Dockerfile -t "$IMAGE" services
+          docker push "$IMAGE"
+          echo "pushed $IMAGE"
+          # Repo is IMMUTABLE — pin the digest for terraform.tfvars (no :latest re-push).
+          aws ecr describe-images --repository-name "$ECR_REPO" --image-ids imageTag="${TAG::12}" \
+            --query 'imageDetails[0].imageDigest' --output text
