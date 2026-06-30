@@ -289,7 +289,14 @@ export default defineSchema({
     .index("by_palace_decayed", ["palaceId", "decayed"])
     .index("by_palace_review", ["palaceId", "needsReview"])
     .index("by_embedding_status", ["palaceId", "embeddingStatus"])
-    .index("by_graphiti_status", ["palaceId", "graphitiStatus"]),
+    .index("by_graphiti_status", ["palaceId", "graphitiStatus"])
+    // Hybrid retrieval (ADR-neop-runtime GAP-1 floor fix): a lexical/full-text channel alongside the
+    // vector index, so exact-term queries hit hard and a strong lexical match can surface even when its
+    // cosine score is marginal. Mirrors the rooms `search_rooms` index.
+    .searchIndex("search_content", {
+      searchField: "content",
+      filterFields: ["palaceId"],
+    }),
 
   // ── DRAWERS (atomic facts, temporally valid) ─────────────────
 

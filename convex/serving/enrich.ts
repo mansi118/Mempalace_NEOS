@@ -15,6 +15,26 @@ export const getPalaceForSearch = internalQuery({
 
 // ─── Resolve embedding doc IDs to closetIds ─────────────────────
 
+// Hybrid retrieval (ADR-neop-runtime GAP-1 floor fix): the lexical/full-text channel. Returns closetIds
+// ordered best-first by full-text relevance. Run alongside vector search in coreSearch; lets exact-term
+// matches surface and bypass the cosine floor that the pure-vector channel applies.
+export const lexicalSearchClosets = internalQuery({
+  args: {
+    palaceId: v.id("palaces"),
+    query: v.string(),
+    limit: v.number(),
+  },
+  handler: async (ctx, { palaceId, query, limit }) => {
+    const hits = await ctx.db
+      .query("closets")
+      .withSearchIndex("search_content", (q) =>
+        q.search("content", query).eq("palaceId", palaceId),
+      )
+      .take(limit);
+    return hits.map((c) => c._id as string); // ordered by full-text relevance (best first)
+  },
+});
+
 export const resolveEmbeddingIds = internalQuery({
   args: {
     embeddingIds: v.array(v.string()),

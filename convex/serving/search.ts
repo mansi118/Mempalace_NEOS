@@ -39,6 +39,13 @@ const DEFAULT_LIMIT = 5;
 const GRAPH_BOOST_PER_ENTITY = 0.05;
 const GRAPH_BOOST_MAX = 0.2;
 
+// Hybrid lexical channel (ADR-neop-runtime GAP-1 floor fix). A full-text hit contributes
+// LEXICAL_WEIGHT / (1 + rank): a #1 lexical hit adds 0.5 (clears the cosine floor on its own), #2 adds
+// 0.25, etc. A lexical match ALSO bypasses the similarity floor — it matched terms, so it is relevant by
+// a criterion the cosine floor doesn't measure. Vector still handles pure-semantic paraphrase (which
+// already clears the 0.35 floor at ~0.36); lexical rescues exact-term and marginal-vector-but-on-topic.
+const LEXICAL_WEIGHT = 0.5;
+
 // Previously-unused signals now folded into ranking (Tier 1 quick-wins):
 //   - closet.confidence: extraction-quality proxy (high when Gemini/Llama
 //     was confident). Slightly boosts well-extracted closets.
@@ -208,6 +215,23 @@ export async function coreSearch(
     scoreMap.set(r.closetId, scoreByEmbId.get(r.embeddingId) ?? 0);
   }
 
+  // 3b. Hybrid lexical channel (ADR-neop-runtime GAP-1 floor fix). Run full-text search and UNION its
+  //     hits into the candidate set — exact-term matches the vector top-k missed are added here; a
+  //     lexical hit later bypasses the cosine floor (step 5) and gets a rank-weighted boost. Vector
+  //     stays primary; lexical rescues exact-term + marginal-vector-but-on-topic recall.
+  const lexicalIds: string[] = await ctx.runQuery(
+    internal.serving.enrich.lexicalSearchClosets,
+    { palaceId: args.palaceId, query: trimmed, limit: args.limit * 3 },
+  );
+  const lexicalRank = new Map<string, number>();
+  lexicalIds.forEach((id, i) => lexicalRank.set(id, i));
+  for (const id of lexicalIds) {
+    if (!scoreMap.has(id)) {
+      closetIds.push(id as Id<"closets">);
+      scoreMap.set(id, 0); // no vector score; surfaced via lexical boost + floor bypass
+    }
+  }
+
   // Note: graph results are only used to re-rank vector hits (step 5 boost).
   // We deliberately do NOT inject graph-only closets here — the similarity
   // floor is the guardrail that makes "I don't know" first-class, and
@@ -259,14 +283,19 @@ export async function coreSearch(
       (graphBoostMap.get(closet._id as string) ?? 0) * GRAPH_BOOST_PER_ENTITY,
       GRAPH_BOOST_MAX,
     );
+    // Hybrid lexical boost: rank-weighted (#1 = +0.5, #2 = +0.25, …). A lexical match also bypasses the
+    // cosine floor below — it matched query terms (relevance the cosine floor doesn't measure).
+    const lrank = lexicalRank.get(closet._id as string);
+    const isLexical = lrank !== undefined;
+    const lexicalBoost = isLexical ? LEXICAL_WEIGHT / (1 + lrank!) : 0;
     const confidenceBoost = closet.confidence * CONFIDENCE_WEIGHT;
     const recencyBoost = recencyFactor(closet.createdAt) * RECENCY_WEIGHT;
-    const score = vectorScore + graphBoost + confidenceBoost + recencyBoost;
+    const score = vectorScore + graphBoost + lexicalBoost + confidenceBoost + recencyBoost;
 
-    // Similarity floor test uses the raw vector+graph, NOT the bonuses.
-    // Otherwise a high-confidence/fresh closet could sneak past the floor
-    // on a query it has no real similarity to.
-    if (vectorScore + graphBoost < args.similarityFloor) continue;
+    // Similarity floor test uses the raw vector+graph, NOT the bonuses (so a high-confidence/fresh closet
+    // can't sneak past on an unrelated query). A LEXICAL hit bypasses the floor: it matched terms, which
+    // is relevance by a criterion cosine doesn't capture (ADR-neop-runtime GAP-1 floor fix).
+    if (!isLexical && vectorScore + graphBoost < args.similarityFloor) continue;
 
     results.push({
       closetId: closet._id,
