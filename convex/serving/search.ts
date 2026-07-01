@@ -25,6 +25,7 @@ import { v } from "convex/values";
 import type { Id, Doc } from "../_generated/dataModel.js";
 import { embedOne } from "../lib/embedder.js";
 import { graphSearch, buildGraphBoostMap } from "../lib/graphClient.js";
+import { cosineSimilarity } from "../lib/vec.js";
 
 // Bedrock Titan v2 score distribution (observed empirically, April 2026):
 //   relevant in-domain:     0.55 - 0.75
@@ -55,6 +56,14 @@ const GRAPH_BOOST_MAX = 0.2;
 // a criterion the cosine floor doesn't measure. Vector still handles pure-semantic paraphrase (which
 // already clears the 0.35 floor at ~0.36); lexical rescues exact-term and marginal-vector-but-on-topic.
 const LEXICAL_WEIGHT = 0.5;
+
+// Recency fallback window (ADR-neop-runtime index-propagation fix). The async vector/search indexes lag
+// (stall-leaning on the self-hosted backend), so the last-N closets by createdAt are additionally scored
+// via cosine computed directly from their transactionally-available stored embedding — routing fresh
+// writes around the async index. Bounds the extra per-query work; only recents NOT already found by the
+// vector channel are cosine-scored (an indexed recent is skipped). Supplements candidates, never overrides
+// ranking — a recency candidate is gated by the SAME adaptive floor on its true cosine.
+const RECENCY_WINDOW = 25;
 
 // Previously-unused signals now folded into ranking (Tier 1 quick-wins):
 //   - closet.confidence: extraction-quality proxy (high when Gemini/Llama
@@ -196,15 +205,10 @@ export async function coreSearch(
       filter: (q: any) => q.eq("palaceId", args.palaceId),
     });
 
-  if (vectorHits.length === 0) {
-    return {
-      results: [],
-      confidence: "low",
-      reason: "no_vector_hits",
-      tokenEstimate: 0,
-      queryTimeMs: Date.now() - t0,
-    };
-  }
+  // NOTE: no early return on empty vectorHits — a fresh write may be invisible to the async vector index
+  // yet recallable via the lexical channel (3b) or the recency fallback (3c). Bailing here would strand
+  // exactly the fresh-write case this path exists to serve; the real empty guard is `closetIds.length === 0`
+  // after all three channels have run.
 
   // 3. Resolve embedding doc IDs → closetIds via a query.
   //    vectorSearch only returns _id (embedding doc) + _score.
@@ -240,6 +244,23 @@ export async function coreSearch(
       closetIds.push(id as Id<"closets">);
       scoreMap.set(id, 0); // no vector score; surfaced via lexical boost + floor bypass
     }
+  }
+
+  // 3c. Recency fallback channel (ADR-neop-runtime index-propagation fix). The async vector/search indexes
+  //     lag (stall-leaning on the self-hosted backend — box-proven), so steps 2–3b can miss a just-written
+  //     closet until its index entry builds. Fetch the last-N by createdAt via the TRANSACTIONAL by_time
+  //     index WITH their stored embeddings (present the moment storeEmbedding ran — only the vector INDEX is
+  //     async) and score each with cosine computed directly here. A recency candidate already found by the
+  //     vector channel is skipped (the async index caught up). Its real cosine feeds the SAME fusion + gate
+  //     (NOT a floor bypass — we have true relevance) so a fresh fact surfaces when relevant, never always.
+  const recents: Array<{ closetId: string; embedding: number[] }> = await ctx.runQuery(
+    internal.serving.enrich.recentClosetsWithEmbeddings,
+    { palaceId: args.palaceId, limit: RECENCY_WINDOW },
+  );
+  for (const rc of recents) {
+    if (scoreMap.has(rc.closetId)) continue; // already surfaced by the vector channel — index caught up
+    closetIds.push(rc.closetId as Id<"closets">);
+    scoreMap.set(rc.closetId, cosineSimilarity(queryEmbedding, rc.embedding));
   }
 
   // Note: graph results are only used to re-rank vector hits (step 5 boost).

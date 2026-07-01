@@ -35,6 +35,37 @@ export const lexicalSearchClosets = internalQuery({
   },
 });
 
+// Recency fallback (ADR-neop-runtime index-propagation fix). The async vector/search indexes lag on the
+// self-hosted backend (stall-leaning: a just-written closet can be invisible to vector+lexical search for
+// 30min+ — box-proven 2026-07-01), so a fresh write is unrecallable until its index entry builds. This
+// returns the last-N closets by createdAt via the TRANSACTIONAL `by_time` index, WITH each closet's stored
+// embedding (the `closet_embeddings` row exists the instant `storeEmbedding` runs — only the vector INDEX is
+// async). coreSearch computes cosine against these directly, so fresh writes are recallable immediately,
+// scored by TRUE relevance (they surface when relevant, not always). Skips retracted/decayed/superseded.
+export const recentClosetsWithEmbeddings = internalQuery({
+  args: {
+    palaceId: v.id("palaces"),
+    limit: v.number(),
+  },
+  handler: async (ctx, { palaceId, limit }) => {
+    const recents = await ctx.db
+      .query("closets")
+      .withIndex("by_time", (q) => q.eq("palaceId", palaceId))
+      .order("desc") // most-recent createdAt first
+      .take(limit);
+    const out: Array<{ closetId: string; embedding: number[] }> = [];
+    for (const c of recents) {
+      if (c.retracted || c.decayed || c.supersededBy !== undefined) continue;
+      const emb = await ctx.db
+        .query("closet_embeddings")
+        .withIndex("by_closet", (q) => q.eq("closetId", c._id))
+        .first();
+      if (emb) out.push({ closetId: c._id as string, embedding: emb.embedding });
+    }
+    return out;
+  },
+});
+
 export const resolveEmbeddingIds = internalQuery({
   args: {
     embeddingIds: v.array(v.string()),
