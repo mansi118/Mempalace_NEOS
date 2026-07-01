@@ -295,7 +295,9 @@ export default defineSchema({
     // cosine score is marginal. Mirrors the rooms `search_rooms` index.
     .searchIndex("search_content", {
       searchField: "content",
-      filterFields: ["palaceId"],
+      // "category" added (recovery 2026-07-01): bumps the search index version → full backfill (same
+      // fast-forward-holes recovery as by_embedding). Existing field; palaceId-only lexical queries unaffected.
+      filterFields: ["palaceId", "category"],
     }),
 
   // ── DRAWERS (atomic facts, temporally valid) ─────────────────
@@ -381,7 +383,11 @@ export default defineSchema({
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
       dimensions: 1024,
-      filterFields: ["palaceId", "wingId"],
+      // "model" added (recovery 2026-07-01): a self-hosted convex restart left the vector index
+      // fast-forwarded past documents (empty/holed); changing the index config bumps its version so the
+      // backend does a FULL backfill from every closet_embeddings row (resume-from-checkpoint keeps the
+      // holes). "model" is an existing field; palaceId-only queries in coreSearch are unaffected.
+      filterFields: ["palaceId", "wingId", "model"],
     }),
 
   // ── ACCESS CONTROL ───────────────────────────────────────────
