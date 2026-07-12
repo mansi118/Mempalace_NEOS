@@ -366,6 +366,23 @@ export default defineSchema({
     .index("by_palace_run", ["palaceId", "runId"]) // load/resolve key here → neopId read FROM the row
     .index("by_palace_status", ["palaceId", "status"]),
 
+  // ── RUN EVENTS (INTERIM shadow-prediction store for the fidelity clock; Track 3) ──
+  // One row per emitted run event (currently only `shadow_prediction`), ADDRESSED by (palaceId, neopId).
+  // The runtime owns the `event` shape (predicted/actual/class); the server is a BLIND store, like twins /
+  // paused_runs. INTERIM BY DESIGN: this lets the fidelity clock warm BEFORE the comms tier lands — the
+  // durable event corpus MOVES to ClickHouse when enable_comms_tier applies (Track 2). Bounded on write
+  // (per-seat cap in runEvents.putRunEvent) so Convex never becomes the event firehose. See palace/runEvents.ts.
+  run_events: defineTable({
+    palaceId: v.id("palaces"),
+    neopId: v.string(),                    // = seat that owns the event (server-derived, never the caller's)
+    runId: v.optional(v.string()),         // correlation to the run (optional)
+    kind: v.string(),                      // "shadow_prediction" (the fidelity signal)
+    event: v.any(),                        // runtime-owned shape {predicted, actual, class, ...}
+    ts: v.number(),                        // event time (runtime-supplied, else server now)
+  })
+    .index("by_palace_neop", ["palaceId", "neopId"])
+    .index("by_palace_neop_ts", ["palaceId", "neopId", "ts"]),
+
   // ── VECTOR EMBEDDINGS (versioned by model) ───────────────────
 
   closet_embeddings: defineTable({

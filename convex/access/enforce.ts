@@ -292,9 +292,11 @@ const TOOL_TO_OP: Record<string, string> = {
   palace_walk_tunnel: "recall",
   palace_stats: "recall",
   palace_get_paused_run: "recall",
+  palace_get_run_events: "recall",       // INTERIM fidelity event store (Track 3); own-seat read
 
   // Write ops → remember
   palace_remember: "remember",
+  palace_put_run_event: "remember",      // INTERIM fidelity event store (Track 3); own-seat append
   palace_save_paused_run: "remember",
   palace_resolve_paused_run: "remember",
   palace_add_closet: "remember",
