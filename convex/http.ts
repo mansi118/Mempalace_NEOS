@@ -456,6 +456,29 @@ async function dispatch(
         status: (params.status as string) ?? "resolved",
       });
 
+    // ── RUN EVENTS (INTERIM shadow-prediction store for the fidelity clock; Track 3) ──
+    // Same own-seat discipline as twins/paused_runs: neopId is server-overwritten, get→recall /
+    // put→remember already gated. A caller reads/writes ONLY its own events. INTERIM store — the
+    // durable event corpus moves to ClickHouse when the comms tier lands (Track 2).
+    case "palace_get_run_events":
+      return ctx.runQuery(api.palace.runEvents.getRunEvents, {
+        palaceId,
+        neopId,
+        kind: params.kind as string | undefined,
+        limit: params.limit as number | undefined,
+      });
+
+    case "palace_put_run_event":
+      // Blind append; runtime owns the event shape (no server-side validation). Bounded per seat.
+      return ctx.runMutation(api.palace.runEvents.putRunEvent, {
+        palaceId,
+        neopId,
+        kind: params.kind as string,
+        event: params.event,
+        runId: params.runId as string | undefined,
+        ts: params.ts as number | undefined,
+      });
+
     // ── STORAGE ───────────────────────────────────────────
     // palace_remember routes through the TRUSTED ingestion pipeline (ingestExchange →
     // getOrCreateRoom → createCloset), which bypasses the per-room write guards by design.
