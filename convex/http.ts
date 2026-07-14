@@ -89,7 +89,12 @@ http.route({
       // the unknown-neopId throw in resolvePermissions. They are ungated (no runtime op); the exact
       // own-twin bound is getTwin/putTwin's `q.eq("neopId", neopId)` over the server-derived neopId.
       // Every other tool resolves perms normally (throws on unknown seat) and is op-gated as before.
-      const isTwinTool = tool === "palace_get_twin" || tool === "palace_put_twin";
+      const isTwinTool =
+        tool === "palace_get_twin" ||
+        tool === "palace_put_twin" ||
+        tool === "palace_get_twin_versions" ||
+        tool === "palace_get_twin_version" ||
+        tool === "palace_rollback_twin";
       const perms: ResolvedPermissions = isTwinTool
         ? identityOnlyPerms(neopId)
         : await ctx.runQuery(internal.access.queries.resolvePermsQuery, {
@@ -419,13 +424,40 @@ async function dispatch(
       });
 
     case "palace_put_twin":
-      // Blind upsert; broker owns versioning (no server-side version check here).
+      // Latest-wins by default; when `baseVersion` is supplied it becomes a server-side CAS (write iff
+      // stored version == baseVersion, else status:"stale_base"). Broker still owns the doc schema.
       return ctx.runMutation(api.palace.twins.putTwin, {
         palaceId,
         neopId,
         doc: params.doc as string,
         version: params.version as number,
         maturity: params.maturity as string,
+        baseVersion: params.baseVersion as number | undefined,
+      });
+
+    case "palace_get_twin_versions":
+      // Own-seat version history (metadata, newest-first, bounded) — the index for diff/rollback.
+      return ctx.runQuery(api.palace.twins.getTwinVersions, {
+        palaceId,
+        neopId,
+        limit: params.limit as number | undefined,
+      });
+
+    case "palace_get_twin_version":
+      // One historical version's doc — the diff primitive (client diffs two; server never parses doc).
+      return ctx.runQuery(api.palace.twins.getTwinVersion, {
+        palaceId,
+        neopId,
+        version: params.version as number,
+      });
+
+    case "palace_rollback_twin":
+      // Restore a retained version as a NEW forward version (monotonic; CAS-coherent). Own-seat only.
+      return ctx.runMutation(api.palace.twins.rollbackTwin, {
+        palaceId,
+        neopId,
+        toVersion: params.toVersion as number,
+        baseVersion: params.baseVersion as number | undefined,
       });
 
     // ── PAUSED RUNS (AwaitingApproval durable pause; P2) ───────

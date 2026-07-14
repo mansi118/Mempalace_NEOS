@@ -316,7 +316,8 @@ const TOOL_TO_OP: Record<string, string> = {
   // Meta
   palace_export: "recall",
 
-  // NOTE: palace_get_twin / palace_put_twin are DELIBERATELY ABSENT (B2, docs/decisions/twin-keying.md).
+  // NOTE: the twin family — palace_get_twin / palace_put_twin / palace_get_twin_versions /
+  // palace_get_twin_version / palace_rollback_twin — is DELIBERATELY ABSENT (B2, docs/decisions/twin-keying.md).
   // The twin is IDENTITY, not memory — reading/writing your own self-model is self-access by *being* that
   // identity, categorically different from recall/remember (memory of stored facts). So twin ops are NOT
   // gated by a memory op. A twin op can only ever touch the twin at its own request neopId (getTwin/putTwin
