@@ -383,6 +383,20 @@ export default defineSchema({
     .index("by_palace_neop", ["palaceId", "neopId"])
     .index("by_palace_neop_ts", ["palaceId", "neopId", "ts"]),
 
+  // ── VAULT do-not-re-promote markers (VL-5 durable half; runtime/vault.py) ──
+  // One row per promoted candidate key, ADDRESSED by (palaceId, neopId, key). The Vault-Promoter marks
+  // a key on promote and CLEARS it on rollback (so a corrected record can be re-promoted). Server is a
+  // blind marker store; own-seat like twins/run_events. See palace/vaultPromoted.ts.
+  vault_promoted: defineTable({
+    palaceId: v.id("palaces"),
+    neopId: v.string(),                    // owning seat (server-derived, never the caller's)
+    key: v.string(),                       // promotion key = provenance.source_external_id / dedup_key
+    promotedAt: v.optional(v.string()),    // runtime-supplied ISO ts (provenance)
+    updatedAt: v.number(),
+  })
+    .index("by_palace_neop_key", ["palaceId", "neopId", "key"])
+    .index("by_palace_neop", ["palaceId", "neopId"]),
+
   // ── VECTOR EMBEDDINGS (versioned by model) ───────────────────
 
   closet_embeddings: defineTable({

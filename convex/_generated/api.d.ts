@@ -42,6 +42,7 @@ import type * as palace_provision from "../palace/provision.js";
 import type * as palace_queries from "../palace/queries.js";
 import type * as palace_runEvents from "../palace/runEvents.js";
 import type * as palace_twins from "../palace/twins.js";
+import type * as palace_vaultPromoted from "../palace/vaultPromoted.js";
 import type * as serving_assemble from "../serving/assemble.js";
 import type * as serving_enrich from "../serving/enrich.js";
 import type * as serving_export from "../serving/export.js";
@@ -93,6 +94,7 @@ declare const fullApi: ApiFromModules<{
   "palace/queries": typeof palace_queries;
   "palace/runEvents": typeof palace_runEvents;
   "palace/twins": typeof palace_twins;
+  "palace/vaultPromoted": typeof palace_vaultPromoted;
   "serving/assemble": typeof serving_assemble;
   "serving/enrich": typeof serving_enrich;
   "serving/export": typeof serving_export;
