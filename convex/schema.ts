@@ -369,6 +369,21 @@ export default defineSchema({
     .index("by_palace_neop", ["palaceId", "neopId"])
     .index("by_palace_neop_version", ["palaceId", "neopId", "version"]),
 
+  // ── NEOP KEYS (Gate D — per-seat signing key registry) ──
+  // The authorized Ed25519 PUBLIC key for a seat, addressed by (palaceId, neopId). Seeded at seat
+  // PROVISIONING (registerNeopKey, an internal/admin op — NEVER a self-serve /mcp tool: a seat that could
+  // register its own key would defeat the binding). When enable_bridge_identity is ON, http.ts verifies
+  // the shim's X-NEop-Identity signature AND that the presented pubkey == this registered one, then trusts
+  // the neopId — closing the `?? "_admin"` fallback. When OFF (default), this table is simply unread.
+  neop_keys: defineTable({
+    palaceId: v.id("palaces"),
+    neopId: v.string(),
+    pubkey: v.string(),                    // base64 Ed25519 public key (32 bytes)
+    createdAt: v.number(),
+    rotatedAt: v.optional(v.number()),     // set on re-registration (key rotation)
+  })
+    .index("by_palace_neop", ["palaceId", "neopId"]),
+
   // ── PAUSED RUNS (AwaitingApproval durable pause; P2) ─────────
   // One row per paused NEop run, addressed by (palaceId, neopId, runId). `state` is the runtime's
   // to_state snapshot (runtime owns the shape; server is a blind store, like twins). The Decision
