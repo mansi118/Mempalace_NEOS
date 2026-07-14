@@ -293,10 +293,13 @@ const TOOL_TO_OP: Record<string, string> = {
   palace_stats: "recall",
   palace_get_paused_run: "recall",
   palace_get_run_events: "recall",       // INTERIM fidelity event store (Track 3); own-seat read
+  palace_is_promoted: "recall",          // VL-5 do-not-re-promote check; own-seat read
 
   // Write ops → remember
   palace_remember: "remember",
   palace_put_run_event: "remember",      // INTERIM fidelity event store (Track 3); own-seat append
+  palace_mark_promoted: "promote",       // VL-5 promote marker; own-seat
+  palace_clear_promoted: "erase",        // VL-5 rollback: drop the marker; own-seat
   palace_save_paused_run: "remember",
   palace_resolve_paused_run: "remember",
   palace_add_closet: "remember",

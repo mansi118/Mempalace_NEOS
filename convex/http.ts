@@ -479,6 +479,22 @@ async function dispatch(
         ts: params.ts as number | undefined,
       });
 
+    // ── VAULT do-not-re-promote markers (VL-5; own-seat like twins/run_events) ──
+    case "palace_is_promoted":
+      return ctx.runQuery(api.palace.vaultPromoted.isPromoted, {
+        palaceId, neopId, key: params.key as string,
+      });
+
+    case "palace_mark_promoted":
+      return ctx.runMutation(api.palace.vaultPromoted.markPromoted, {
+        palaceId, neopId, key: params.key as string, promotedAt: params.promotedAt as string | undefined,
+      });
+
+    case "palace_clear_promoted":
+      return ctx.runMutation(api.palace.vaultPromoted.clearPromoted, {
+        palaceId, neopId, key: params.key as string,
+      });
+
     // ── STORAGE ───────────────────────────────────────────
     // palace_remember routes through the TRUSTED ingestion pipeline (ingestExchange →
     // getOrCreateRoom → createCloset), which bypasses the per-room write guards by design.
