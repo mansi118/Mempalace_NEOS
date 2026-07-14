@@ -32,8 +32,18 @@ import {
   filterRoomsByReadScope,
   AccessDenied,
 } from "./access/enforce.js";
+import { decideIdentity } from "./access/edgeIdentity.js";
 
 const http = httpRouter();
+
+// Gate D master switch (mirrors the `enable_bridge_identity` terraform flag, surfaced to the server as an
+// env var). Default OFF → the legacy `?? "_admin"` identity path is BYTE-IDENTICAL to today. When ON, /mcp
+// requires a valid signed X-NEop-Identity whose pubkey is registered for the seat (neop_keys), and the
+// `_admin` fallback is CLOSED. Read PER REQUEST (negligible cost) so the flip needs no redeploy and is
+// testable. Flipping it is ML's gated step (seed neop_keys first, validate in staging).
+function bridgeIdentityEnforced(): boolean {
+  return (process.env.ENABLE_BRIDGE_IDENTITY ?? "").trim().toLowerCase() === "true";
+}
 
 // ─── CORS ───────────────────────────────────────────────────────
 
@@ -73,14 +83,47 @@ http.route({
     }
 
     const { tool, params = {} } = body;
-    const neopId =
-      body.neopId ?? request.headers.get("X-Palace-Neop") ?? "_admin";
+    // The CLAIMED requester (still unverified). Under Gate D this is proven below; when the flag is OFF it
+    // is trusted as before (with the `_admin` fallback).
+    const claimedNeopId = body.neopId ?? request.headers.get("X-Palace-Neop") ?? null;
     const palaceId = (body.palaceId ?? params.palaceId) as string | undefined;
 
     if (!tool) return jsonResponse({ error: "missing_tool" }, 400);
     if (!palaceId) return jsonResponse({ error: "missing_palaceId" }, 400);
 
     const pid = palaceId as Id<"palaces">;
+
+    // ── Gate D: verify the signed X-NEop-Identity before trusting neopId (enable_bridge_identity) ──
+    let neopId: string;
+    if (bridgeIdentityEnforced()) {
+      let registeredPubkey: string | null = null;
+      try {
+        const reg = claimedNeopId
+          ? await ctx.runQuery(internal.palace.neopKeys.getNeopKey, { palaceId: pid, neopId: claimedNeopId })
+          : null;
+        registeredPubkey = reg?.pubkey ?? null;
+      } catch {
+        registeredPubkey = null; // an unreadable key registry DENIES (fail-closed) — it never allows
+      }
+      const decision = decideIdentity({
+        palaceId, // the exact string the shim signed over — do not re-derive
+        claimedNeopId,
+        tool,
+        presentedPubkeyB64: request.headers.get("X-NEop-Pubkey"),
+        signatureB64: request.headers.get("X-NEop-Identity"),
+        registeredPubkeyB64: registeredPubkey,
+      });
+      if (!decision.ok) {
+        // Fail-closed at the edge — no `_admin` fallback when identity is enforced.
+        return jsonResponse(
+          { error: "identity_denied", denied_at_layer: "edge", reason: decision.reason },
+          403,
+        );
+      }
+      neopId = decision.neopId;
+    } else {
+      neopId = claimedNeopId ?? "_admin"; // legacy path — byte-identical to today (flag OFF, the default)
+    }
 
     try {
       // ── Phase 7: Access control gate ────────────────────

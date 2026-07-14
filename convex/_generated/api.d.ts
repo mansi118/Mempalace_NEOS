@@ -37,6 +37,7 @@ import type * as maintenance_pruner from "../maintenance/pruner.js";
 import type * as maintenance_tunnels from "../maintenance/tunnels.js";
 import type * as migrations_runner from "../migrations/runner.js";
 import type * as palace_mutations from "../palace/mutations.js";
+import type * as palace_neopKeys from "../palace/neopKeys.js";
 import type * as palace_pausedRuns from "../palace/pausedRuns.js";
 import type * as palace_provision from "../palace/provision.js";
 import type * as palace_queries from "../palace/queries.js";
@@ -89,6 +90,7 @@ declare const fullApi: ApiFromModules<{
   "maintenance/tunnels": typeof maintenance_tunnels;
   "migrations/runner": typeof migrations_runner;
   "palace/mutations": typeof palace_mutations;
+  "palace/neopKeys": typeof palace_neopKeys;
   "palace/pausedRuns": typeof palace_pausedRuns;
   "palace/provision": typeof palace_provision;
   "palace/queries": typeof palace_queries;
