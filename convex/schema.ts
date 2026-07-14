@@ -350,6 +350,25 @@ export default defineSchema({
   })
     .index("by_palace_neop", ["palaceId", "neopId"]),
 
+  // ── TWIN VERSIONS (append-only version history for diff + rollback) ──
+  // Each successful put_twin (and rollback) appends a SNAPSHOT here so a prior twin state can be
+  // fetched (to diff, client-side — the server never parses the broker-owned `doc`) or rolled back
+  // to. This is what lets the server stop being a pure latest-wins store WITHOUT taking ownership of
+  // the twin schema: it stores opaque `doc` snapshots by version, nothing more. Bounded per
+  // (palaceId, neopId) to TWIN_VERSION_CAP (oldest trimmed) so history can't grow without limit.
+  // Own-seat isolation is the same exact-key discipline as `twins` (server-derived neopId).
+  twin_versions: defineTable({
+    palaceId: v.id("palaces"),
+    neopId: v.string(),
+    version: v.number(),                   // monotonic; matches the twins.version at snapshot time
+    doc: v.string(),                       // opaque serialized twin JSON (broker owns the schema)
+    maturity: v.string(),
+    createdAt: v.number(),
+    restoredFrom: v.optional(v.number()),  // set when this version was produced by a rollback
+  })
+    .index("by_palace_neop", ["palaceId", "neopId"])
+    .index("by_palace_neop_version", ["palaceId", "neopId", "version"]),
+
   // ── PAUSED RUNS (AwaitingApproval durable pause; P2) ─────────
   // One row per paused NEop run, addressed by (palaceId, neopId, runId). `state` is the runtime's
   // to_state snapshot (runtime owns the shape; server is a blind store, like twins). The Decision
