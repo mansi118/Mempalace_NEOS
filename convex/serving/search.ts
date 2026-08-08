@@ -25,77 +25,32 @@ import { v } from "convex/values";
 import type { Id, Doc } from "../_generated/dataModel.js";
 import { embedOne } from "../lib/embedder.js";
 import { graphSearch, buildGraphBoostMap } from "../lib/graphClient.js";
+import { cosineSimilarity } from "../lib/vec.js";
+import {
+  fuseAndRank,
+  DEFAULT_SIMILARITY_FLOOR,
+  type FusionInput,
+  type SearchResult,
+} from "../lib/fusion.js";
 
-// Bedrock Titan v2 score distribution (observed empirically, April 2026):
-//   relevant in-domain:     0.55 - 0.75
-//   weak in-domain:          0.45 - 0.55
-//   irrelevant/off-domain:   0.25 - 0.40
-//
-// ADAPTIVE FLOOR (ADR-neop-runtime GAP-1 fix, 2026-06-30). A FIXED absolute cosine floor is the root
-// error: cosine magnitudes are NOT comparable across query types (a lexical-overlap query's correct hit
-// scores ~0.9; a zero-overlap paraphrase's correct hit scores ~0.36 — both correct). The GAP-1 box proof
-// showed a legitimate #1 paraphrase at 0.358 sitting right at the old 0.35 floor. So gate by
-//   keepThreshold = max(NOISE_FLOOR, topRaw × RELATIVE_KEEP_RATIO)
-// NOISE_FLOOR is the ABSOLUTE minimum that preserves "I don't know" (empty when even the best hit is
-// off-domain garbage); the relative term ADAPTS to query type and drops the weak tail. Lexical hits
-// bypass entirely (they matched terms). NOISE_FLOOR is intentionally low (0.20, below legit paraphrase
-// ~0.36, above off-domain noise ~0.25-).
-const DEFAULT_SIMILARITY_FLOOR = 0.2; // = NOISE_FLOOR (absolute minimum; preserves "I don't know")
-const RELATIVE_KEEP_RATIO = 0.5; // keep results within this fraction of the top raw relevance
+// Scoring/gating/diversification constants + the adaptive-floor fusion now live in `lib/fusion.ts`
+// (pure + unit-tested — the load-bearing decision path is provable offline, unlike when it was inline in
+// this "use node" action). search.ts keeps only the orchestration knobs below.
 const DEFAULT_LIMIT = 5;
 
-// Graph-boost tuning. Each matching entity in a closet adds this to its vector
-// score; capped at GRAPH_BOOST_MAX. Keeps vector dominant but re-ranks ties.
-const GRAPH_BOOST_PER_ENTITY = 0.05;
-const GRAPH_BOOST_MAX = 0.2;
+// Recency fallback window (ADR-neop-runtime index-propagation fix). The async vector/search indexes lag
+// (stall-leaning on the self-hosted backend), so the last-N closets by createdAt are additionally scored
+// via cosine computed directly from their transactionally-available stored embedding — routing fresh
+// writes around the async index. Only recents NOT already found by the vector channel are cosine-scored.
+const RECENCY_WINDOW = 25;
 
-// Hybrid lexical channel (ADR-neop-runtime GAP-1 floor fix). A full-text hit contributes
-// LEXICAL_WEIGHT / (1 + rank): a #1 lexical hit adds 0.5 (clears the cosine floor on its own), #2 adds
-// 0.25, etc. A lexical match ALSO bypasses the similarity floor — it matched terms, so it is relevant by
-// a criterion the cosine floor doesn't measure. Vector still handles pure-semantic paraphrase (which
-// already clears the 0.35 floor at ~0.36); lexical rescues exact-term and marginal-vector-but-on-topic.
-const LEXICAL_WEIGHT = 0.5;
-
-// Previously-unused signals now folded into ranking (Tier 1 quick-wins):
-//   - closet.confidence: extraction-quality proxy (high when Gemini/Llama
-//     was confident). Slightly boosts well-extracted closets.
-//   - createdAt age: gentle recency decay, half-life 90 days. Lets fresh
-//     memories float up when two results tie on vector+graph.
-//   - same-room penalty: first result from a room pays nothing; subsequent
-//     results from the same room get docked. Cheap MMR-lite, prevents
-//     five near-duplicates dominating top-5.
-const CONFIDENCE_WEIGHT = 0.05;
-const RECENCY_WEIGHT = 0.05;
-const RECENCY_HALF_LIFE_DAYS = 90;
-const SAME_ROOM_PENALTY = 0.03;
-
-// Confidence thresholds recalibrated for Titan's compressed score range.
-// Previously 0.7/0.5 — tuned for Qwen3's wider distribution.
+// Confidence thresholds recalibrated for Titan's compressed score range (top final score → high/medium/low).
 const CONF_HIGH_THRESHOLD = 0.65;
 const CONF_MEDIUM_THRESHOLD = 0.50;
 
-function recencyFactor(createdAt: number): number {
-  const ageDays = (Date.now() - createdAt) / 86_400_000;
-  // Exponential decay: 1.0 at ingest, ~0.5 at half-life, ~0.25 at 2× half-life.
-  return Math.exp(-ageDays / RECENCY_HALF_LIFE_DAYS);
-}
+// ─── Types (SearchResult re-exported from lib/fusion) ───────────
 
-// ─── Types ──────────────────────────────────────────────────────
-
-export interface SearchResult {
-  closetId: string;
-  score: number;
-  content: string;
-  title?: string;
-  category: string;
-  wingId: string;
-  wingName: string;
-  roomId: string;
-  roomName: string;
-  createdAt: number;
-  sourceAdapter: string;
-  confidence: number;
-}
+export type { SearchResult };
 
 export interface SearchResponse {
   results: SearchResult[];
@@ -196,15 +151,10 @@ export async function coreSearch(
       filter: (q: any) => q.eq("palaceId", args.palaceId),
     });
 
-  if (vectorHits.length === 0) {
-    return {
-      results: [],
-      confidence: "low",
-      reason: "no_vector_hits",
-      tokenEstimate: 0,
-      queryTimeMs: Date.now() - t0,
-    };
-  }
+  // NOTE: no early return on empty vectorHits — a fresh write may be invisible to the async vector index
+  // yet recallable via the lexical channel (3b) or the recency fallback (3c). Bailing here would strand
+  // exactly the fresh-write case this path exists to serve; the real empty guard is `closetIds.length === 0`
+  // after all three channels have run.
 
   // 3. Resolve embedding doc IDs → closetIds via a query.
   //    vectorSearch only returns _id (embedding doc) + _score.
@@ -242,6 +192,23 @@ export async function coreSearch(
     }
   }
 
+  // 3c. Recency fallback channel (ADR-neop-runtime index-propagation fix). The async vector/search indexes
+  //     lag (stall-leaning on the self-hosted backend — box-proven), so steps 2–3b can miss a just-written
+  //     closet until its index entry builds. Fetch the last-N by createdAt via the TRANSACTIONAL by_time
+  //     index WITH their stored embeddings (present the moment storeEmbedding ran — only the vector INDEX is
+  //     async) and score each with cosine computed directly here. A recency candidate already found by the
+  //     vector channel is skipped (the async index caught up). Its real cosine feeds the SAME fusion + gate
+  //     (NOT a floor bypass — we have true relevance) so a fresh fact surfaces when relevant, never always.
+  const recents: Array<{ closetId: string; embedding: number[] }> = await ctx.runQuery(
+    internal.serving.enrich.recentClosetsWithEmbeddings,
+    { palaceId: args.palaceId, limit: RECENCY_WINDOW },
+  );
+  for (const rc of recents) {
+    if (scoreMap.has(rc.closetId)) continue; // already surfaced by the vector channel — index caught up
+    closetIds.push(rc.closetId as Id<"closets">);
+    scoreMap.set(rc.closetId, cosineSimilarity(queryEmbedding, rc.embedding));
+  }
+
   // Note: graph results are only used to re-rank vector hits (step 5 boost).
   // We deliberately do NOT inject graph-only closets here — the similarity
   // floor is the guardrail that makes "I don't know" first-class, and
@@ -266,97 +233,45 @@ export async function coreSearch(
     closetIds,
   });
 
-  // 5. Score every candidate; gate ADAPTIVELY afterward (not a fixed absolute cosine — see the
-  //    DEFAULT_SIMILARITY_FLOOR comment). rawRelevance = vector+graph ONLY (bonuses excluded from the
-  //    gate so a fresh/confident closet can't sneak past on an unrelated query).
-  const scored: Array<{ result: SearchResult; rawRelevance: number; isLexical: boolean }> = [];
-
+  // 5. Build fusion inputs (apply retracted/decayed/superseded + wing/category/time filters here), then
+  //    hand off to the PURE fuseAndRank (lib/fusion) for scoring + adaptive-floor gate + MMR-lite diversify.
+  //    The decision path lives in fusion.ts so it is unit-testable without this "use node" action.
+  const fusionInputs: FusionInput[] = [];
   for (const item of enriched) {
     if (!item) continue;
     const { closet, wingName, roomName } = item;
 
-    // Skip retracted, decayed, older versions.
     if (closet.retracted) continue;
     if (closet.decayed) continue;
     if (closet.supersededBy !== undefined) continue;
-
-    // Wing filter (post-filter since vectorSearch only filters by palaceId).
     if (args.wingFilter && wingName !== args.wingFilter) continue;
-
-    // Category filter.
     if (args.categoryFilter && closet.category !== args.categoryFilter) continue;
-
-    // Time range filter (for searchTemporal).
     if (args.afterTs && closet.createdAt < args.afterTs) continue;
     if (args.beforeTs && closet.createdAt > args.beforeTs) continue;
 
-    const vectorScore = scoreMap.get(closet._id as string) ?? 0;
-    const graphBoost = Math.min(
-      (graphBoostMap.get(closet._id as string) ?? 0) * GRAPH_BOOST_PER_ENTITY,
-      GRAPH_BOOST_MAX,
-    );
-    // Hybrid lexical boost: rank-weighted (#1 = +0.5, #2 = +0.25, …). A lexical match also bypasses the
-    // adaptive floor below — it matched query terms (relevance cosine doesn't measure).
-    const lrank = lexicalRank.get(closet._id as string);
-    const isLexical = lrank !== undefined;
-    const lexicalBoost = isLexical ? LEXICAL_WEIGHT / (1 + lrank!) : 0;
-    const confidenceBoost = closet.confidence * CONFIDENCE_WEIGHT;
-    const recencyBoost = recencyFactor(closet.createdAt) * RECENCY_WEIGHT;
-    const score = vectorScore + graphBoost + lexicalBoost + confidenceBoost + recencyBoost;
-
-    scored.push({
-      rawRelevance: vectorScore + graphBoost,
-      isLexical,
-      result: {
-        closetId: closet._id,
-        score,
-        content: closet.content,
-        title: closet.title ?? undefined,
-        category: closet.category,
-        wingId: closet.wingId,
-        wingName,
-        roomId: closet.roomId,
-        roomName,
-        createdAt: closet.createdAt,
-        sourceAdapter: closet.sourceAdapter,
-        confidence: closet.confidence,
-      },
+    fusionInputs.push({
+      closetId: closet._id as string,
+      content: closet.content,
+      title: closet.title ?? undefined,
+      category: closet.category,
+      wingId: closet.wingId as string,
+      wingName,
+      roomId: closet.roomId as string,
+      roomName,
+      createdAt: closet.createdAt,
+      sourceAdapter: closet.sourceAdapter,
+      confidence: closet.confidence,
+      vectorScore: scoreMap.get(closet._id as string) ?? 0, // vector cosine OR recency-computed cosine OR 0
+      graphMatchCount: graphBoostMap.get(closet._id as string) ?? 0,
+      lexicalRank: lexicalRank.get(closet._id as string), // undefined ⇒ not a lexical hit
     });
   }
 
-  // 5b. ADAPTIVE floor: keepThreshold = max(NOISE_FLOOR, topRaw × RELATIVE_KEEP_RATIO). The noise floor
-  // (args.similarityFloor) preserves "I don't know" — if even the best hit is below it AND nothing matched
-  // lexically, results is empty rather than best-of-garbage. The relative term adapts to query type and
-  // drops the weak tail. Lexical hits always survive. (ADR-neop-runtime GAP-1 floor fix.)
-  const topRaw = scored.reduce((m, c) => Math.max(m, c.rawRelevance), 0);
-  const keepThreshold = Math.max(args.similarityFloor, topRaw * RELATIVE_KEEP_RATIO);
-  const results: SearchResult[] = scored
-    .filter((c) => c.isLexical || c.rawRelevance >= keepThreshold)
-    .map((c) => c.result);
-
-  // Re-rank by final score.
-  results.sort((a, b) => b.score - a.score);
-
-  // MMR-lite: apply same-room penalty greedily so top-K spans rooms.
-  // Pass 1: pick top result; Pass N: any subsequent pick from a room
-  // we've already picked from pays SAME_ROOM_PENALTY per prior pick,
-  // then we re-sort the remaining pool.
-  const diversified: SearchResult[] = [];
-  const roomCount = new Map<string, number>();
-  const pool = [...results];
-  while (diversified.length < args.limit && pool.length > 0) {
-    // Apply current penalty snapshot + re-rank pool.
-    pool.sort((a, b) => {
-      const penA = (roomCount.get(a.roomId) ?? 0) * SAME_ROOM_PENALTY;
-      const penB = (roomCount.get(b.roomId) ?? 0) * SAME_ROOM_PENALTY;
-      return (b.score - penB) - (a.score - penA);
-    });
-    const pick = pool.shift()!;
-    diversified.push(pick);
-    roomCount.set(pick.roomId, (roomCount.get(pick.roomId) ?? 0) + 1);
-  }
-  results.length = 0;
-  results.push(...diversified);
+  const results: SearchResult[] = fuseAndRank(fusionInputs, {
+    similarityFloor: args.similarityFloor,
+    limit: args.limit,
+    now: Date.now(),
+  });
 
   // 6. Determine overall confidence.
   let confidence: "high" | "medium" | "low" = "low";
