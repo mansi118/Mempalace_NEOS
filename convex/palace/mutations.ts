@@ -14,6 +14,7 @@ import { mutation, internalMutation } from "../_generated/server.js";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel.js";
 import { computeDedupKey, normalizeContent } from "../lib/dedup.js";
+import { EMBEDDING_DIMENSIONS } from "../lib/embedder.js";
 import {
   CATEGORY_TTL_DEFAULTS,
   HALL_TYPES,
@@ -881,13 +882,13 @@ export const storeEmbedding = mutation({
     modelVersion: v.string(),
   },
   handler: async (ctx, args) => {
-    // Dimension check — MUST match schema.ts vectorIndex dimensions AND lib/qwen.ts EMBEDDING_DIMENSIONS.
-    // If you change the embedding model, update all three locations.
-    // Bedrock Titan Text Embeddings v2: 1024 dims.
-    const EXPECTED_DIMS = 1024;
-    if (args.embedding.length !== EXPECTED_DIMS) {
+    // Dimension check — single source of truth: the active embedder's EMBEDDING_DIMENSIONS
+    // (lib/embedder.js re-exports the active provider; M1 = gemini @768). This MUST stay equal to the
+    // schema.ts `by_embedding` vectorIndex `dimensions`. Importing the constant (rather than a literal)
+    // prevents the drift that previously left this at 1024 after the schema/embedder moved to 768.
+    if (args.embedding.length !== EMBEDDING_DIMENSIONS) {
       throw new Error(
-        `embedding must be ${EXPECTED_DIMS}-dim, got ${args.embedding.length}`,
+        `embedding must be ${EMBEDDING_DIMENSIONS}-dim, got ${args.embedding.length}`,
       );
     }
     const closet = await ctx.db.get(args.closetId);

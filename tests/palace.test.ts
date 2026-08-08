@@ -25,7 +25,7 @@ import { api } from "../convex/_generated/api.js";
 import schema from "../convex/schema.js";
 import { EMBEDDER_ENV_KEY } from "../convex/lib/embedder.js"; // provider-agnostic: survives provider switches
 
-const EMBED_DIM = 1024; // Bedrock Titan Text Embeddings v2
+const EMBED_DIM = 768; // M1/D1: Gemini gemini-embedding-001 @768 (MRL) — matches the by_embedding index
 const fakeEmbedding = (): number[] => Array.from({ length: EMBED_DIM }, () => Math.random());
 
 // Helper: create a fully-scaffolded palace with a single wing/hall/room.

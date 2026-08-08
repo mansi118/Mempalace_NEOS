@@ -17,4 +17,7 @@
 // Provider libs MUST export the same surface: EMBEDDING_MODEL · EMBEDDING_DIMENSIONS · EMBEDDER_PROVIDER ·
 // EMBEDDER_ENV_KEY · embedderConfigured · truncateForEmbedding · embedOne · embedBatchTexts · EmbedInputType.
 
-export * from "./qwen.js";
+// M1/D1: Gemini @768 is the canonical V1 embedder. NOTE: do NOT deploy this branch to the live no-NAT
+// AWS spine — Gemini is unreachable there (no internet egress); that spine stays on qwen.js (Titan@1024)
+// until a NAT gateway lands. This selector is for dev + the post-NAT live flip (empty corpus = free re-index).
+export * from "./gemini.js";
